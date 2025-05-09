@@ -62,6 +62,7 @@
 // Demo Function
   #define DEMO_PAUSE_TIME 2000
   unsigned long demo_pause_last = 0;
+  int demo_state = 0;
   void Demo_Run();
 
 // Serial Comms
@@ -273,7 +274,14 @@ void Demo_Run() {
     demo_pause_last = 0;
     
     // Pick new character
-    int new_char_idx = random(0,FLAPS_NUM);
+    int new_char_idx = 0;
+    if (demo_state < FLAPS_NUM) {
+      new_char_idx = demo_state;
+      demo_state++;
+    } else {
+      new_char_idx = random(0,FLAPS_NUM);
+    }
+
     char new_char = char_order[new_char_idx];
     Serial.print("Random character: ");
       Serial.println(new_char);
