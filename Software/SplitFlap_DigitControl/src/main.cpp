@@ -27,25 +27,35 @@
 
 // Endstop Setup
   //void Endstop_Check();
-  #define ENDSTOP_CHECK_TIME 250
-  unsigned long endstop_check_last = 0;
+  //#define ENDSTOP_CHECK_TIME 250
+  //unsigned long endstop_check_last = 0;
+  long last_endstop_trigger = 0;
   void Endstop_Interrupt();
-  bool is_homed = false;
+  int is_homed = 0;
+  long cross_endstop = 0;
+  void Endstop_Cross();
   
 
 // Motor Setup
   #define HALFSTEP 8
   #define FULLSTEP 4
-  AccelStepper stepper1(HALFSTEP, PIN_MOTOR_D, PIN_MOTOR_A, PIN_MOTOR_B, PIN_MOTOR_C);
-  #define MOTOR_TARGET_POSITION 12288
-  #define MOTOR_SPEED_HOMING   500.0
-  #define MOTOR_SPEED_RUN     2000.0
-  #define MOTOR_ACCEL         4000.0
+  AccelStepper stepper1(HALFSTEP, PIN_MOTOR_B, PIN_MOTOR_C, PIN_MOTOR_D, PIN_MOTOR_A);
+  //#define MOTOR_TARGET_POSITION 12288
+  #define MOTOR_SPEED_HOMING   300.0
+  #define MOTOR_SPEED_RUN     1500.0
+  #define MOTOR_ACCEL         3000.0
   // Motor steps/rev filter
     expFilter motor_sr;
-    #define MOTOR_SR_DEFAULT 4096
-    #define MOTOR_SR_WEIGHT 0.25
-    #define MOTOR_SR_DEBOUNCE 200
+    #define MOTOR_SR_DEFAULT 4076
+    //#define MOTOR_SR_DEFAULT 2038
+    #define MOTOR_SR_WEIGHT 0.95
+    #define MOTOR_SR_DEBOUNCE 800
+  #define MOTOR_CALIBRATE_TURNS 4
+  #define MOTOR_CALIBRATE_SPEED 1000
+  #define MOTOR_CALIBRATE_FORCE 100
+  int motor_turns = -1;
+  int motor_calibrate[MOTOR_CALIBRATE_TURNS+1] = {0};
+  void Motor_Calibrate();
   void Motor_Home();
 
 
@@ -55,14 +65,14 @@
   #define FLAPS_ROTATION .025 // 1/40
   const char char_order[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
   int Flap_Char(char incoming_char);
-  int Flap_Steps2Go(int flap_idx);
-  int flap_offset = 100;
+  void Flap_Idx2Pos(int flap_idx);
+  int flap_offset = -425;
   void Flap_Move_Offset();
   
 // Demo Function
   #define DEMO_PAUSE_TIME 2000
   unsigned long demo_pause_last = 0;
-  int demo_state = 0;
+  int demo_state = 26;
   void Demo_Run();
 
 // Serial Comms
@@ -73,7 +83,7 @@
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("Starting Sketch:");
 
   // Set up pins
@@ -92,17 +102,21 @@ void setup() {
     pinMode(PIN_ADDR_2, INPUT_PULLUP);
     pinMode(PIN_ADDR_3, INPUT_PULLUP);
     pinMode(PIN_ADDR_4, INPUT_PULLUP);
+    
+    Address_Show();
+
 
   // Motor SR Filter
-  motor_sr.setValue(MOTOR_SR_DEFAULT);
-  motor_sr.setWeight(MOTOR_SR_WEIGHT);
+    motor_sr.setValue(MOTOR_SR_DEFAULT);
+    motor_sr.setWeight(MOTOR_SR_WEIGHT);
 
   // Set up Motor
     stepper1.setSpeed(MOTOR_SPEED_RUN);         
     stepper1.setAcceleration(MOTOR_ACCEL); 
     stepper1.setMaxSpeed(MOTOR_SPEED_RUN);
 
-  Motor_Home();
+  //Motor_Home();
+  Motor_Calibrate();
   demo_pause_last = millis() - DEMO_PAUSE_TIME;
   Demo_Run();
 }
@@ -115,16 +129,21 @@ void loop() {
     stepper1.run();
   } else {
     if (demo_pause_last == 0){
+      if (cross_endstop != 0) {
+        Endstop_Cross();
+      }
       // set pause at current position
       demo_pause_last = millis();
+      //Serial.print("Current position: "); Serial.println(stepper1.currentPosition());
     }
     stepper1.disableOutputs();
     Demo_Run();
   }
 
-  Address_Show();
-
-  //Endstop_Check();
+  // Force motor recalibration
+  if (motor_turns > MOTOR_CALIBRATE_FORCE) {
+    Motor_Calibrate();
+  }
 
 }
 
@@ -182,24 +201,103 @@ void Endstop_Check() {
   */
 
 void Endstop_Interrupt() {
-  if (is_homed) {
-    if (stepper1.currentPosition() > MOTOR_SR_DEBOUNCE) {
-      // Filter steps for rotation
-      motor_sr.filter(stepper1.currentPosition());
-      // Also zero motor?
-      stepper1.setCurrentPosition(-flap_offset);
+  if (is_homed == 1) {
+    // used for homing the motor
+    if (stepper1.currentPosition() > MOTOR_SR_DEBOUNCE && cross_endstop == 0) {
+      // Set endstop position
+      cross_endstop = stepper1.currentPosition();
+      motor_turns++;
+    }
+  } else if (is_homed == 2) {
+    // used for calibrating the motor
+    if (stepper1.currentPosition() - cross_endstop >= MOTOR_SR_DEBOUNCE) {
+      cross_endstop = stepper1.currentPosition();
+      if (motor_turns >= 0) {
+        motor_calibrate[motor_turns] = stepper1.currentPosition();
+      }
+      motor_turns++;
     }
   } else {
-    // zero out motor position
-    stepper1.setCurrentPosition(-flap_offset);
-    is_homed = true;
-    flap_idx_current = 0;
+    // used for typical use
+    stepper1.setCurrentPosition(flap_offset);
+    is_homed = 1;
   }
 }
 
+void Endstop_Cross() {
+  //Serial.print("Endstop Cross point: "); Serial.println(cross_endstop);
+  //Serial.print("Current position: "); Serial.println(stepper1.currentPosition());
+
+  // Where I am: current position
+  // Endstop Cross Point: cross_endstop
+  // Zero Position: current position - motor_sr
+  // steps/rotation = cross_endstop - flap_offset
+
+  // Filter steps for rotation
+  //Serial.print("Filtering: "); Serial.println(cross_endstop - flap_offset);
+  //motor_sr.filter(cross_endstop);
+  //Serial.print("Filtered "); Serial.print(cross_endstop);
+  //  Serial.print(" Current SR: "); Serial.println(motor_sr.getValue());
+
+  // calculate absolute position of flap index?
+  stepper1.setCurrentPosition(stepper1.currentPosition() - cross_endstop);
+  //Serial.print("Updated position: "); Serial.println(stepper1.currentPosition());
+  Serial.println();
+
+  cross_endstop = 0;
+}
+
+void Motor_Calibrate() {
+  is_homed = 2; // set interrupt to calibrate state
+  Serial.print("Current SR value: ");
+    Serial.println(motor_sr.getValue());
+
+  // Gather rotation data
+  stepper1.setSpeed(MOTOR_CALIBRATE_SPEED);
+  while (motor_turns <= MOTOR_CALIBRATE_TURNS) {
+    stepper1.runSpeed();
+    yield();
+  }
+
+  // filter collected data
+  for (int i = 0; i < MOTOR_CALIBRATE_TURNS; i++) {
+    int sr_turn = motor_calibrate[i+1] - motor_calibrate[i];
+    if (abs(sr_turn - MOTOR_SR_DEFAULT) > MOTOR_SR_DEBOUNCE) {
+      Serial.print("Turn ");
+        Serial.print(i);
+        Serial.print(" returned an error with ");
+        Serial.print(sr_turn);
+        Serial.println(" steps");
+    } else {
+      motor_sr.filter(sr_turn);
+      Serial.print("Turn ");
+        Serial.print(i);
+        Serial.print(" filtering S/R: ");
+        Serial.println(sr_turn);
+    }
+  }
+  Serial.print("New SR value: ");
+    Serial.println(motor_sr.getValue());
+
+  // Move off the endstop
+  int new_position = stepper1.currentPosition() + (int)(motor_sr.getValue()/2.0);
+  stepper1.moveTo(new_position);
+  while (stepper1.distanceToGo() != 0) {
+    stepper1.run();
+    yield();
+  }
+
+  motor_turns = 0;
+  // Home Motor
+  //is_homed = 0;
+  Motor_Home();
+
+}
+
 void Motor_Home() {
+  is_homed = 0;
   stepper1.setSpeed(MOTOR_SPEED_HOMING);
-  while (!is_homed) {
+  while (is_homed == 0) {
     stepper1.runSpeed();
     yield();
   }
@@ -208,12 +306,13 @@ void Motor_Home() {
 }
 
 void Flap_Move_Offset() {
-  stepper1.moveTo(0);
   stepper1.setSpeed(MOTOR_SPEED_RUN);
+  stepper1.moveTo(0);
   while (stepper1.distanceToGo() != 0) {
     stepper1.run();
     yield();
   }
+  flap_idx_current = 0;
 }
 
 int Flap_Char(char incoming_char) {
@@ -226,8 +325,44 @@ int Flap_Char(char incoming_char) {
   return index;
 }
 
-int Flap_Steps2Go(int flap_idx) {
-  int steps = 0;
+void Flap_Idx2Pos(int flap_idx) {
+  // Calculation for absolute movement
+    float pos_float = motor_sr.getValue() * FLAPS_ROTATION * (float)flap_idx;
+    if (flap_idx < flap_idx_current && (long)stepper1.currentPosition() > pos_float) {
+      pos_float += motor_sr.getValue();
+    }
+    
+    pos_float -= flap_offset;
+
+    long position = (long)pos_float;
+
+    // Communicate the move
+    //Serial.print("Moving to character id ");
+    //  Serial.print(flap_idx);
+    //  Serial.print(" at position ");
+    //  Serial.println(position);
+
+    /* // Take 1 at absolute calc
+    // calculate flap position from flap index
+    float pos_float = motor_sr.getValue() * FLAPS_ROTATION * (float)flap_idx;
+    Serial.print("Pos (float): "); Serial.print(pos_float);
+    position = (long)pos_float;
+    Serial.print(" Pos (int): "); Serial.println(position);
+
+    // determine if current position is greater than new flap position
+    if (flap_idx < flap_idx_current) {
+      position += (long)motor_sr.getValue();
+      Serial.print("Added Rotation, new position: "); Serial.println(position);
+    }
+
+    // Communicate the move
+    Serial.print("Moving to character id ");
+      Serial.print(flap_idx);
+      Serial.print(" at position ");
+      Serial.println(position);
+      */
+
+  /* //Calculation for relative movement
   int move = 0;
   if (flap_idx < flap_idx_current) {
     // go to end, then keep on till morning
@@ -240,10 +375,21 @@ int Flap_Steps2Go(int flap_idx) {
     steps = (int)motor_sr.getValue() * FLAPS_ROTATION * move;
   }
   
-  return steps;
+  Serial.print("Moving ");
+    Serial.print(move);
+    Serial.print(" flaps, ");
+    Serial.print(steps);
+    Serial.print(", to character id ");
+    Serial.println(flap_idx);
+  */
+  
+  stepper1.setSpeed(MOTOR_SPEED_RUN);
+  //stepper1.moveTo(position);
+  stepper1.moveTo(position);
+  flap_idx_current = flap_idx;
 }
 
-
+/*
 void Serial_Read_Buffer() {
   if (Serial.available() >0 ) {
     unsigned int message_pos = 0;
@@ -266,7 +412,7 @@ void Serial_Read_Buffer() {
     }
   }
 }
-
+*/
 
 void Demo_Run() {
   if (demo_pause_last != 0 && demo_pause_last + DEMO_PAUSE_TIME <= millis()) {
@@ -283,15 +429,16 @@ void Demo_Run() {
     }
 
     char new_char = char_order[new_char_idx];
-    Serial.print("Random character: ");
-      Serial.println(new_char);
+    if (demo_state < FLAPS_NUM) {
+      Serial.print("Cycle to character: ");
+    } else {
+      Serial.print("Random character: ");
+    }
+    Serial.println(new_char);
 
     int move_idx = 0;
-    int move_steps = 0;
+    //int flap_position = 0;
     move_idx = Flap_Char(new_char);
-    move_steps = Flap_Steps2Go(move_idx);
-
-    stepper1.setSpeed(MOTOR_SPEED_RUN);
-    stepper1.move(move_steps);
+    Flap_Idx2Pos(move_idx);
   }
 }
