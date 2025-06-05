@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Wire.h>
 #include <AccelStepper.h>
 
 #include "expFilter.h"
@@ -19,11 +20,20 @@
 #define PIN_ADDR_3   7
 #define PIN_ADDR_4   6
 
-// Address Setup
-  int Address_Calc();
-  void Address_Show();
-  #define DISPLAY_ADDRESS_TIME 5000
-  unsigned long addr_show_last = 0;
+// I2C Setup
+  void i2c_receiveEvent(int numBytesReceived);
+  //void i2c_requestEvent();
+  bool newRxData = false;
+  byte msg_id = 0;
+  char msg_char;
+
+  // Address Setup
+    int i2c_address = 0;
+    #define I2C_ADDRESS_OFFSET 30
+    int Address_Calc();
+    //void Address_Show();
+    //#define DISPLAY_ADDRESS_TIME 5000
+    //unsigned long addr_show_last = 0;
 
 // Endstop Setup
   //void Endstop_Check();
@@ -34,6 +44,10 @@
   int is_homed = 0;
   long cross_endstop = 0;
   void Endstop_Cross();
+  void Endstop_Calibrate();
+  expFilter endstop_offset;
+  #define ENDSTOP_OFFSET_WEIGHT 0.5
+  int flap_offset = -96;
   
 
 // Motor Setup
@@ -54,7 +68,7 @@
   #define MOTOR_CALIBRATE_SPEED 1000
   #define MOTOR_CALIBRATE_FORCE 100
   int motor_turns = -1;
-  int motor_calibrate[MOTOR_CALIBRATE_TURNS+1] = {0};
+  int motor_calibrate[MOTOR_CALIBRATE_TURNS+1][2] = {0};
   void Motor_Calibrate();
   void Motor_Home();
 
@@ -67,13 +81,12 @@
   long Flap_Pos_Abs(int flap_idx);
   int Flap_Char(char incoming_char);
   void Flap_Idx2Pos(int flap_idx);
-  int flap_offset = -400;
   void Flap_Move_Offset();
   
 // Demo Function
   #define DEMO_PAUSE_TIME 2000
   unsigned long demo_pause_last = 0;
-  int demo_state = 26;
+  int demo_state = 0;
   void Demo_Run();
 
 // Serial Comms
@@ -86,6 +99,14 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   Serial.println("Starting Sketch:");
+
+  // Calculate I2C Address
+  i2c_address = Address_Calc();
+  Serial.print("Starting I2C bus with address: "); Serial.println(i2c_address);
+  // Start I2C bus with address
+  Wire.begin(i2c_address);
+  Wire.onReceive(i2c_receiveEvent);
+  //Wire.onRequest(i2c_requestEvent);
 
   // Set up pins
     //pinMode(PIN_MOTOR_A, OUTPUT);
@@ -104,8 +125,10 @@ void setup() {
     pinMode(PIN_ADDR_3, INPUT_PULLUP);
     pinMode(PIN_ADDR_4, INPUT_PULLUP);
     
-    Address_Show();
-
+    
+  // Endstop Offset Filter
+    endstop_offset.setValue(flap_offset);
+    endstop_offset.setWeight(ENDSTOP_OFFSET_WEIGHT);
 
   // Motor SR Filter
     motor_sr.setValue(MOTOR_SR_DEFAULT);
@@ -124,7 +147,20 @@ void setup() {
 
 void loop() {
 
-  //Serial_Read_Buffer();
+  // Handle I2C Messages
+  if (newRxData) {
+    // Display message
+    Serial.println("**********************");
+    Serial.print(  "Message ID  : "); Serial.println((int)msg_id);
+    Serial.print(  "Message Char: "); Serial.println(msg_char);
+    Serial.println("**********************");
+    Serial.println();
+
+    // Go to new char
+    Flap_Idx2Pos(Flap_Char(msg_char));
+
+    newRxData = false;
+  }
 
   if (stepper1.distanceToGo() != 0) {
     stepper1.run();
@@ -151,6 +187,30 @@ void loop() {
 
 }
 
+void i2c_receiveEvent(int numBytesReceived) {
+  if (!newRxData) {
+    msg_id = Wire.read();
+    msg_char = Wire.read();
+    if (numBytesReceived > 2) {
+      // dump the data
+      while(Wire.available() > 0) {
+          byte c = Wire.read();
+      }
+    }
+    newRxData = true;
+  }
+  else {
+    // dump the data
+    while(Wire.available() > 0) {
+        byte c = Wire.read();
+    }
+  }
+}
+
+//void requestEvent() {
+//    Wire.write((byte*) &txData, sizeof(txData));
+//    rqSent = true;
+//}
 
 int Address_Calc() {
   bool bit0 = digitalRead(PIN_ADDR_0);
@@ -159,7 +219,7 @@ int Address_Calc() {
   bool bit3 = digitalRead(PIN_ADDR_3);
   bool bit4 = digitalRead(PIN_ADDR_4);
 
-  int addr = 0;
+  int addr = I2C_ADDRESS_OFFSET;
 
   if (bit0) {
     addr += 1;
@@ -184,6 +244,7 @@ int Address_Calc() {
   return addr;
 }
 
+/*
 void Address_Show() {
   if (addr_show_last + DISPLAY_ADDRESS_TIME <= millis()) {
     int address = Address_Calc();
@@ -192,17 +253,7 @@ void Address_Show() {
     addr_show_last = millis();
   }
 }
-
-/*
-void Endstop_Check() {
-  if (endstop_check_last + ENDSTOP_CHECK_TIME <= millis()) {
-    bool endstop_state = digitalRead(PIN_ENDSTOP);
-    Serial.print("Endstop State: ");
-      Serial.println(endstop_state);
-    endstop_check_last = millis();
-  }
-}
-  */
+*/
 
 void Endstop_Interrupt() {
   if (is_homed == 1) {
@@ -212,7 +263,7 @@ void Endstop_Interrupt() {
       cross_endstop = stepper1.currentPosition();
       motor_turns++;
     }
-  } else if (is_homed == 2) {
+  } /*else if (is_homed == 2) {
     // used for calibrating the motor
     if (stepper1.currentPosition() - cross_endstop >= MOTOR_SR_DEBOUNCE) {
       cross_endstop = stepper1.currentPosition();
@@ -220,9 +271,9 @@ void Endstop_Interrupt() {
         motor_calibrate[motor_turns] = stepper1.currentPosition();
       }
       motor_turns++;
-      cross_endstop = stepper1.currentPosition();
+      //cross_endstop = stepper1.currentPosition();
     }
-  } else {
+  } */else {
     // used for typical use
     stepper1.setCurrentPosition(flap_offset);
     is_homed = 1;
@@ -252,11 +303,34 @@ void Endstop_Cross() {
   cross_endstop = 0;
 }
 
+void Endstop_Calibrate() {
+  bool pin_state = digitalRead(PIN_ENDSTOP);
+  // Routine to calibrate offset
+
+  if (motor_turns >= 0) {
+    if (!pin_state) {
+      if (stepper1.currentPosition() - cross_endstop >= MOTOR_SR_DEBOUNCE) {
+        cross_endstop = stepper1.currentPosition();
+        // if pin LOW, set to column 0
+        motor_calibrate[motor_turns][0] = stepper1.currentPosition();
+      }
+    } else {
+      // if pin HIGH set to column 1
+      motor_calibrate[motor_turns][1] = stepper1.currentPosition();
+      motor_turns++;
+    }
+  } else if (pin_state) {
+    motor_turns++;
+  }
+}
+
 void Motor_Calibrate() {
-  is_homed = 2; // set interrupt to calibrate state
+  //is_homed = 2; // set interrupt to calibrate state
   motor_turns = -1;
   Serial.print("Current SR value: ");
     Serial.println(motor_sr.getValue());
+
+  attachInterrupt(digitalPinToInterrupt(PIN_ENDSTOP), Endstop_Calibrate, CHANGE);
 
   // Gather rotation data
   stepper1.setSpeed(MOTOR_CALIBRATE_SPEED);
@@ -267,7 +341,15 @@ void Motor_Calibrate() {
 
   // filter collected data
   for (int i = 0; i < MOTOR_CALIBRATE_TURNS; i++) {
-    int sr_turn = motor_calibrate[i+1] - motor_calibrate[i];
+    int sr_turn = motor_calibrate[i+1][0] - motor_calibrate[i][0];
+    int endstop_pass = -(motor_calibrate[i][1] - motor_calibrate[i][0]) / 2;
+    //Serial.print("Turn ");
+    //  Serial.print(i);
+    //  Serial.print(", sr_turn: ");
+    //  Serial.print(sr_turn);
+    //  Serial.print(", endstop_pass: ");
+    //  Serial.println(endstop_pass);
+      
     if (abs(sr_turn - MOTOR_SR_DEFAULT) > MOTOR_SR_DEBOUNCE) {
       Serial.print("Turn ");
         Serial.print(i);
@@ -280,20 +362,32 @@ void Motor_Calibrate() {
         Serial.print(i);
         Serial.print(" filtering S/R: ");
         Serial.println(sr_turn);
+      endstop_offset.filter(endstop_pass);
+      Serial.print("Turn ");
+        Serial.print(i);
+        Serial.print(" filtering Endstop Offset: ");
+        Serial.println(endstop_pass);
     }
   }
   Serial.print("New SR value: ");
     Serial.println(motor_sr.getValue());
+  
+  flap_offset = endstop_offset.getValue();
+  Serial.print("New Endstop Offset value: ");
+    Serial.println(flap_offset);
+    
 
   // Not necessary after position calculation is corrected
   // Move off the endstop
-  int new_position = stepper1.currentPosition() + ((int)motor_sr.getValue() + flap_offset - 100);
+  int new_position = stepper1.currentPosition() + ((int)motor_sr.getValue() + flap_offset - 400);
   stepper1.moveTo(new_position);
   while (stepper1.distanceToGo() != 0) {
     stepper1.run();
     yield();
   }
 
+  // Return to regular endstop behavior
+  attachInterrupt(digitalPinToInterrupt(PIN_ENDSTOP), Endstop_Interrupt, FALLING);
   cross_endstop = 0;
   motor_turns = 0;
   // Home Motor
