@@ -1,18 +1,131 @@
 #include <Arduino.h>
+#include <Wire.h>
 
-// put function declarations here:
-int myFunction(int, int);
+struct I2CTx {
+    byte id;
+    char payload;
+};
+
+// I2C
+  #define PIN_SCL 5
+  #define PIN_SDA 4
+  void I2C_Address_Scan();
+  void I2C_Transmit(int digit, I2CTx payload);
+  byte address_list[32];
+  int address_count = -1;
+
+// Flaps
+  #define FLAPS_NUM 40
+  const char char_order[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
+
+// Demo Function
+  #define DEMO_PAUSE_TIME 2000
+  unsigned long demo_pause_last = 0;
+  int demo_state = 40;
+  void Demo_Run();
+  
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  Serial.println();
+  Serial.println("Starting sketch!");
+  
+  Wire.begin(PIN_SDA, PIN_SCL);
+
+  I2C_Address_Scan();
+
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // Scan for addresses
+  
+  Demo_Run();
+
+  delay(5000);
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+
+void I2C_Address_Scan() {
+  byte error, address;
+  int nDevices;
+
+  Serial.println("Scanning...");
+
+  nDevices = 0;
+  for(address = 1; address < 127; address++ ) {
+    // The i2c_scanner uses the return value of
+    // the Wire.endTransmisstion to see if
+    // a device did acknowledge to the address.
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0) {
+      Serial.print("I2C device found at address 0x");
+      if (address<16) Serial.print("0");
+      Serial.print(address,HEX);
+      Serial.println(" !");
+      nDevices++;
+
+      // Add address to list
+      if (address >= 30 && address <= 64) {
+        address_count++;
+        address_list[address_count] = address;
+      }
+      
+
+    } else if (error==4) {
+      Serial.print("Unknow error at address 0x");
+      if (address<16) Serial.print("0");
+      Serial.print(address,HEX);
+      Serial.println(" !");
+    }
+  }
+}
+
+void I2C_Transmit(int digit, I2CTx payload) {
+  byte send_addr = address_list[digit];
+  if (send_addr > 8 && send_addr < 120) {
+    Wire.beginTransmission(send_addr);
+    Wire.write((byte*) &payload, sizeof(payload));
+    Wire.endTransmission();    // this is what actually sends the data
+
+    Serial.print("Sent id ");
+      Serial.print(payload.id);
+      Serial.print(" ");
+      Serial.print(payload.payload);
+      Serial.print(" to ");
+      Serial.print(send_addr,HEX);
+      Serial.println();
+  }
+}
+
+void Demo_Run() {
+  if (demo_pause_last + DEMO_PAUSE_TIME <= millis()) {
+    // set demo_pause_last to 0 so we can set it when we turn off the motor
+    //demo_pause_last = 0;
+    
+    // Pick new character
+    int new_char_idx = 0;
+    if (demo_state < FLAPS_NUM) {
+      new_char_idx = demo_state;
+      demo_state++;
+    } else {
+      new_char_idx = random(0,FLAPS_NUM);
+    }
+
+    char new_char = char_order[new_char_idx];
+    if (demo_state < FLAPS_NUM) {
+      Serial.print("Cycle to character: ");
+    } else {
+      Serial.print("Random character: ");
+    }
+    Serial.println(new_char);
+
+    I2CTx message;
+    message.id = 33;
+    message.payload = new_char;
+    I2C_Transmit(0, message);
+
+    demo_pause_last = millis();
+  }
 }

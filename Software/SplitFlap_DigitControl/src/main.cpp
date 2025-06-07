@@ -156,15 +156,19 @@ void loop() {
     Serial.println("**********************");
     Serial.println();
 
-    // Go to new char
-    Flap_Idx2Pos(Flap_Char(msg_char));
+    if ((int)msg_id == 33) {
+      // Go to new char
+      Serial.println("Received expected message, moving to new position");
+      int flap_id = Flap_Char(msg_char);
+      Flap_Idx2Pos(flap_id);
+    }
 
     newRxData = false;
   }
 
   if (stepper1.distanceToGo() != 0) {
     stepper1.run();
-  } else {
+  } /*else {
     if (demo_pause_last == 0){
       if (cross_endstop != 0) {
         Endstop_Cross();
@@ -176,7 +180,7 @@ void loop() {
     }
     stepper1.disableOutputs();
     Demo_Run();
-  }
+  } */
 
   // Force motor recalibration
   if (motor_turns >= MOTOR_CALIBRATE_FORCE) {
@@ -189,8 +193,13 @@ void loop() {
 
 void i2c_receiveEvent(int numBytesReceived) {
   if (!newRxData) {
-    msg_id = Wire.read();
-    msg_char = Wire.read();
+    if (Wire.available()){
+      msg_id = Wire.read();
+    }
+    if (Wire.available()){
+      msg_char = Wire.read();
+    }
+
     if (numBytesReceived > 2) {
       // dump the data
       while(Wire.available() > 0) {
@@ -207,10 +216,6 @@ void i2c_receiveEvent(int numBytesReceived) {
   }
 }
 
-//void requestEvent() {
-//    Wire.write((byte*) &txData, sizeof(txData));
-//    rqSent = true;
-//}
 
 int Address_Calc() {
   bool bit0 = digitalRead(PIN_ADDR_0);
@@ -244,16 +249,6 @@ int Address_Calc() {
   return addr;
 }
 
-/*
-void Address_Show() {
-  if (addr_show_last + DISPLAY_ADDRESS_TIME <= millis()) {
-    int address = Address_Calc();
-    Serial.print("Address is: ");
-      Serial.println(address);
-    addr_show_last = millis();
-  }
-}
-*/
 
 void Endstop_Interrupt() {
   if (is_homed == 1) {
