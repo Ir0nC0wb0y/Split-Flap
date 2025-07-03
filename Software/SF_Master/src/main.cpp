@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-struct I2CTx {
-    byte id;
+struct I2CTx_33 {
+    byte id = 33;
     char payload;
 };
 
@@ -10,7 +10,7 @@ struct I2CTx {
   #define PIN_SCL 5
   #define PIN_SDA 4
   void I2C_Address_Scan();
-  void I2C_Transmit(int digit, I2CTx payload);
+  void I2C_Transmit(int digit, I2CTx_33 payload);
   byte address_list[32];
   int address_count = -1;
 
@@ -82,7 +82,7 @@ void I2C_Address_Scan() {
   }
 }
 
-void I2C_Transmit(int digit, I2CTx payload) {
+void I2C_Transmit(int digit, I2CTx_33 payload) {
   byte send_addr = address_list[digit];
   if (send_addr > 8 && send_addr < 120) {
     Wire.beginTransmission(send_addr);
@@ -121,8 +121,7 @@ void Demo_Run() {
     }
     Serial.println(new_char);
 
-    I2CTx message;
-    message.id = 33;
+    I2CTx_33 message;
     message.payload = new_char;
     I2C_Transmit(0, message);
 

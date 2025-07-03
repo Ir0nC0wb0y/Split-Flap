@@ -101,6 +101,12 @@ void setup() {
   Serial.println("Starting Sketch:");
 
   // Calculate I2C Address
+  // Address Pins
+    pinMode(PIN_ADDR_0, INPUT_PULLUP);
+    pinMode(PIN_ADDR_1, INPUT_PULLUP);
+    pinMode(PIN_ADDR_2, INPUT_PULLUP);
+    pinMode(PIN_ADDR_3, INPUT_PULLUP);
+    pinMode(PIN_ADDR_4, INPUT_PULLUP);
   i2c_address = Address_Calc();
   Serial.print("Starting I2C bus with address: "); Serial.println(i2c_address);
   // Start I2C bus with address
@@ -118,12 +124,7 @@ void setup() {
     pinMode(PIN_ENDSTOP, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(PIN_ENDSTOP), Endstop_Interrupt, FALLING);
 
-    // Address Pins
-    pinMode(PIN_ADDR_0, INPUT_PULLUP);
-    pinMode(PIN_ADDR_1, INPUT_PULLUP);
-    pinMode(PIN_ADDR_2, INPUT_PULLUP);
-    pinMode(PIN_ADDR_3, INPUT_PULLUP);
-    pinMode(PIN_ADDR_4, INPUT_PULLUP);
+    
     
     
   // Endstop Offset Filter
@@ -223,6 +224,14 @@ int Address_Calc() {
   bool bit2 = digitalRead(PIN_ADDR_2);
   bool bit3 = digitalRead(PIN_ADDR_3);
   bool bit4 = digitalRead(PIN_ADDR_4);
+
+  Serial.print("Address bits: ");
+    Serial.print(bit4);
+    Serial.print(bit3);
+    Serial.print(bit2);
+    Serial.print(bit1);
+    Serial.print(bit0);
+    Serial.println();
 
   int addr = I2C_ADDRESS_OFFSET;
 
