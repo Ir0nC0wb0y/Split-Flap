@@ -6,7 +6,7 @@
 
 // coil order: blue, pink, yellow, orange
 // wire order: yellow(A), orange(B), pink(C), blue(D)
-// Stepper expects: blue-yellow, pink-orange
+// Stepper lib expects: blue-yellow, pink-orange
 
 
 #define PIN_MOTOR_A 17  // yellow
@@ -31,14 +31,8 @@
     int i2c_address = 0;
     #define I2C_ADDRESS_OFFSET 30
     int Address_Calc();
-    //void Address_Show();
-    //#define DISPLAY_ADDRESS_TIME 5000
-    //unsigned long addr_show_last = 0;
 
 // Endstop Setup
-  //void Endstop_Check();
-  //#define ENDSTOP_CHECK_TIME 250
-  //unsigned long endstop_check_last = 0;
   long last_endstop_trigger = 0;
   void Endstop_Interrupt();
   int is_homed = 0;
@@ -54,14 +48,12 @@
   #define HALFSTEP 8
   #define FULLSTEP 4
   AccelStepper stepper1(HALFSTEP, PIN_MOTOR_B, PIN_MOTOR_C, PIN_MOTOR_D, PIN_MOTOR_A);
-  //#define MOTOR_TARGET_POSITION 12288
   #define MOTOR_SPEED_HOMING   300.0
   #define MOTOR_SPEED_RUN     1500.0
   #define MOTOR_ACCEL         3000.0
   // Motor steps/rev filter
     expFilter motor_sr;
-    #define MOTOR_SR_DEFAULT 4096
-    //#define MOTOR_SR_DEFAULT 2038
+    #define MOTOR_SR_DEFAULT 4089  // was 4096
     #define MOTOR_SR_WEIGHT 0.95
     #define MOTOR_SR_DEBOUNCE 800
   #define MOTOR_CALIBRATE_TURNS 4
@@ -143,7 +135,6 @@ void setup() {
   //Motor_Home();
   Motor_Calibrate();
   demo_pause_last = millis() - DEMO_PAUSE_TIME;
-  Demo_Run();
 }
 
 void loop() {
@@ -151,15 +142,15 @@ void loop() {
   // Handle I2C Messages
   if (newRxData) {
     // Display message
-    Serial.println("**********************");
+    Serial.println("***********");
     Serial.print(  "Message ID  : "); Serial.println((int)msg_id);
     Serial.print(  "Message Char: "); Serial.println(msg_char);
-    Serial.println("**********************");
+    Serial.println("***********");
     Serial.println();
 
     if ((int)msg_id == 33) {
       // Go to new char
-      Serial.println("Received expected message, moving to new position");
+      //Serial.println("Received expected message, moving to new position");
       int flap_id = Flap_Char(msg_char);
       Flap_Idx2Pos(flap_id);
     }
@@ -169,19 +160,12 @@ void loop() {
 
   if (stepper1.distanceToGo() != 0) {
     stepper1.run();
-  } /*else {
-    if (demo_pause_last == 0){
-      if (cross_endstop != 0) {
-        Endstop_Cross();
-      }
-      // set pause at current position
-      demo_pause_last = millis();
-      Serial.println();
-      //Serial.print("Current position: "); Serial.println(stepper1.currentPosition());
+  } else {
+    if (cross_endstop != 0) {
+      Endstop_Cross();
     }
     stepper1.disableOutputs();
-    Demo_Run();
-  } */
+  }
 
   // Force motor recalibration
   if (motor_turns >= MOTOR_CALIBRATE_FORCE) {
@@ -204,7 +188,7 @@ void i2c_receiveEvent(int numBytesReceived) {
     if (numBytesReceived > 2) {
       // dump the data
       while(Wire.available() > 0) {
-          byte c = Wire.read();
+          Wire.read();
       }
     }
     newRxData = true;
@@ -212,7 +196,7 @@ void i2c_receiveEvent(int numBytesReceived) {
   else {
     // dump the data
     while(Wire.available() > 0) {
-        byte c = Wire.read();
+        Wire.read();
     }
   }
 }
@@ -458,67 +442,13 @@ void Flap_Idx2Pos(int flap_idx) {
     // 
 
     // Communicate the move
-    Serial.print("Moving to character id ");
-      Serial.print(flap_idx);
-      Serial.print(" at position ");
-      Serial.println(flap_pos_new);
+    //Serial.print("Moving to character id ");
+    //  Serial.print(flap_idx);
+    //  Serial.print(" at position ");
+    //  Serial.println(flap_pos_new);
 
   stepper1.setSpeed(MOTOR_SPEED_RUN);
   //stepper1.moveTo(position);
   stepper1.moveTo(flap_pos_new);
   flap_idx_current = flap_idx;
-}
-
-/*
-void Serial_Read_Buffer() {
-  if (Serial.available() >0 ) {
-    unsigned int message_pos = 0;
-    while (Serial.available() > 0) {
-      // Create Place to store message
-      
-
-      // Read bytes
-      char inByte = Serial.read();
-      if ( inByte != '\n' && (message_pos < SERIAL_BUFFER_LEN - 1) ) {
-        //Add the incoming byte to our message
-        message[message_pos] = inByte;
-        message_pos++;
-      } else {
-        //Add null character to string
-        message[message_pos] = '\0';
-        //Reset for the next message
-        message_pos = 0;
-      }
-    }
-  }
-}
-*/
-
-void Demo_Run() {
-  if (demo_pause_last != 0 && demo_pause_last + DEMO_PAUSE_TIME <= millis()) {
-    // set demo_pause_last to 0 so we can set it when we turn off the motor
-    demo_pause_last = 0;
-    
-    // Pick new character
-    int new_char_idx = 0;
-    if (demo_state < FLAPS_NUM) {
-      new_char_idx = demo_state;
-      demo_state++;
-    } else {
-      new_char_idx = random(0,FLAPS_NUM);
-    }
-
-    char new_char = char_order[new_char_idx];
-    if (demo_state < FLAPS_NUM) {
-      Serial.print("Cycle to character: ");
-    } else {
-      Serial.print("Random character: ");
-    }
-    Serial.println(new_char);
-
-    int move_idx = 0;
-    //int flap_position = 0;
-    move_idx = Flap_Char(new_char);
-    Flap_Idx2Pos(move_idx);
-  }
 }

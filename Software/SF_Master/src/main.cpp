@@ -7,14 +7,17 @@ struct I2CTx_33 {
 };
 
 // I2C
-  #define PIN_SCL 5
-  #define PIN_SDA 4
+  #define PIN_SCL 22
+  #define PIN_SDA 21
   void I2C_Address_Scan();
   void I2C_Transmit(int digit, I2CTx_33 payload);
   byte address_list[32];
   int address_count = -1;
+  #define I2C_DIGIT_ADDR_START 30
+  #define I2C_DIGIT_ADDR_END   63
 
 // Flaps
+  #define I2C_BUS_DELAY 1000 // Wait a moment before scanning to give slower digits a chance to join the bus
   #define FLAPS_NUM 40
   const char char_order[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
 
@@ -32,6 +35,7 @@ void setup() {
   
   Wire.begin(PIN_SDA, PIN_SCL);
 
+  delay(I2C_BUS_DELAY);
   I2C_Address_Scan();
 
 }
@@ -84,7 +88,11 @@ void I2C_Address_Scan() {
 
 void I2C_Transmit(int digit, I2CTx_33 payload) {
   byte send_addr = address_list[digit];
-  if (send_addr > 8 && send_addr < 120) {
+  if (send_addr >= I2C_DIGIT_ADDR_START && send_addr <= I2C_DIGIT_ADDR_END) {
+    // Query digit for readiness
+      // if not ready, wait
+
+    // Send Character
     Wire.beginTransmission(send_addr);
     Wire.write((byte*) &payload, sizeof(payload));
     Wire.endTransmission();    // this is what actually sends the data
@@ -96,6 +104,9 @@ void I2C_Transmit(int digit, I2CTx_33 payload) {
       Serial.print(" to ");
       Serial.print(send_addr,HEX);
       Serial.println();
+  } else {
+    Serial.print("Invalid address: ");
+      Serial.println(send_addr);
   }
 }
 
