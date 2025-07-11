@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Flap Control</title>
+    <style>
+        body {
+            background: #181a1b;
+            color: #f5f6fa;
+            font-family: 'Roboto Mono', monospace;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            letter-spacing: 0.2em;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 8px #000a;
+            text-align: center;
+        }
+        .splitflap {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .flap {
+            background: #222;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px #000a;
+            width: 2.5rem;
+            height: 3.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-family: 'Roboto Mono', monospace;
+            color: #ffe066;
+            border-bottom: 2px solid #444;
+            position: relative;
+        }
+        .flap::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; top: 50%;
+            height: 1px;
+            background: #444;
+        }
+    </style>
+    <!-- Google Fonts for monospace look -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1>Split Flap Control</h1>
+    <div class="splitflap">
+        <div class="flap">S</div>
+        <div class="flap">F</div>
+        <div class="flap">C</div>
+    </div>
+</body>
+</html>
