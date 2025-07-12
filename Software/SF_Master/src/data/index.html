@@ -14,14 +14,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-        }
-        h1 {
-            font-size: 2.5rem;
-            letter-spacing: 0.2em;
-            margin-bottom: 2rem;
-            text-shadow: 0 2px 8px #000a;
-            text-align: center;
         }
         .splitflap {
             display: flex;
@@ -49,16 +41,88 @@
             height: 1px;
             background: #444;
         }
+        h1 {
+            font-size: 2.5rem;
+            letter-spacing: 0.2em;
+            text-shadow: 0 2px 8px #000a;
+            text-align: center;
+        }
+        #letters-preview {
+            margin-top: 1rem;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.2rem;
+            margin-bottom: 0.2rem;
+        }
+        header .splitflap {
+            gap: 0.5rem;
+        }
+        header .flap {
+            width: 1.6rem;
+            height: 2.4rem;
+            font-size: 1.7rem;
+        }
+        header h1 {
+            font-size: 1.3rem;
+            letter-spacing: 0.15em;
+            text-shadow: 0 2px 8px #000a;
+            font-weight: 700;
+        }
     </style>
     <!-- Google Fonts for monospace look -->
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Split Flap Control</h1>
-    <div class="splitflap">
-        <div class="flap">S</div>
-        <div class="flap">F</div>
-        <div class="flap">C</div>
-    </div>
+    <header>
+        <div class="splitflap">
+            <div class="flap">S</div>
+            <div class="flap">F</div>
+            <div class="flap">C</div>
+        </div>
+        <h1>Split Flap Control</h1>
+    </header>
+    <p>
+        Current Letters (6):
+        <div id="letters-current" class="splitflap">
+            <div class="flap">A</div>
+            <div class="flap">B</div>
+            <div class="flap">C</div>
+            <div class="flap">D</div>
+            <div class="flap">E</div>
+            <div class="flap">F</div>
+        </div>
+    </p>
+    <p>
+        <label for="letters">Set Letters (6):</label>
+        <form action="/set_letters" method="post">
+            <input type="text" id="letters" name="letters" maxlength="6" pattern="^[A-Za-z0-9 \.\:\/]{0,6}$" required>
+            <button type="submit">Set</button>
+        </form>
+        <div id="letters-preview" class="splitflap">
+            <div class="flap"></div>
+            <div class="flap"></div>
+            <div class="flap"></div>
+            <div class="flap"></div>
+            <div class="flap"></div>
+            <div class="flap"></div>
+        </div>
+    </p>
+    <script>
+        document.getElementById('letters').addEventListener('input', function() {
+            let letters = this.value.toUpperCase().slice(0, 6);
+            if (letters.length < 6) {
+                // pad start to put the letters in the middle
+                letters = ' '.repeat((6 - letters.length)/2) + letters;
+            }
+            const flaps = document.querySelectorAll('#letters-preview.splitflap .flap');
+            flaps.forEach((flap, index) => {
+                flap.textContent = letters[index] || ' ';
+            });
+        });
+    </script>
 </body>
 </html>
