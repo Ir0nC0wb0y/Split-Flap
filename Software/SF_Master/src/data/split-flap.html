@@ -8,18 +8,18 @@
         .split-flap-panel {
             perspective: 20cm;
             perspective-origin: 50% 20%;
-            width: 32rem;
         }
         .splitflap-character, .splitflap-character .flap {
-            width: 5rem;
-            font-size: 7rem;
-            line-height: 7rem;
+            width: 2.5rem;
+            font-size: 3.5rem;
+            line-height: 3.5rem;
         }
         .splitflap-character, .splitflap-character .flap.flap-current {
-            height: 7rem;
+            height: 3.5rem;
         }
         .splitflap-character .flap.flap-current-flipper, .splitflap-character .flap.flap-next-flipper, .splitflap-character .flap.flap-next-top  {
-            height: 3.5rem; /* half the height of a full flap */
+            height: 1.75rem; /* half the height of a full flap */
+            display: none;
         }
 
         .splitflap-character {
@@ -28,13 +28,26 @@
         }
         .splitflap-character .flap {
             background: #222;
-            color: white;
+            border-radius: 6px;
+            font-family: 'Roboto Mono', monospace;
+            color: #ffe066;
 
             position: absolute;
             top: 0px;
             left: 0px;
             overflow: hidden;
             text-align: center;
+        }
+        .splitflap-character .flap.flap-current {
+            border-bottom: 2px solid #444;
+            box-shadow: 0 4px 16px #000a;
+        }
+        .flap.flap-current::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; top: 50%;
+            height: 1px;
+            background: #444;
         }
         .splitflap-character .flap.flap-current-flipper {
             transform-origin: bottom;
@@ -84,7 +97,7 @@
 </head>
 <body>
     <h1>Split Flap Character</h1>    
-    <div class="split-flap-panel">
+    <div class="split-flap-panel" style="width: 17rem;">
         <div class="splitflap-character">
             <div class="flap flap-current">A</div>
             <div class="flap flap-next-top">W</div>
@@ -210,23 +223,23 @@
             const nextCharacterFlippersText = [ ...document.querySelectorAll('.flap.flap-next-flipper span') ];
             for (const nextCharacterTop of nextCharacterTops) {
                 nextCharacterTop.innerText = currentCharacter;
-                nextCharacterTop.style.display = '';
+                nextCharacterTop.style.display = 'initial';
             }
             for (const nextCharacterFlipperText of nextCharacterFlippersText) {
                 nextCharacterFlipperText.innerText = currentCharacter;
             }
             for (const currentCharacterFlipper of currentCharacterFlippers) {
                 currentCharacterFlipper.classList.add('animate');
-                currentCharacterFlipper.style.display = '';
+                currentCharacterFlipper.style.display = 'initial';
             }
             for (const nextCharacterFlipper of nextCharacterFlippers) {
                 nextCharacterFlipper.classList.add('animate');
-                nextCharacterFlipper.style.display = '';
+                nextCharacterFlipper.style.display = 'initial';
                 nextCharacterFlipper.style.opacity = '0';
             }
             setTimeout(() => {
                 for (const nextCharacterFlipper of nextCharacterFlippers) {
-                    // nextCharacterFlipper.style.display = '';
+                    // nextCharacterFlipper.style.display = 'initial';
                     nextCharacterFlipper.style.opacity = '1';
                 }
             }, 100);
