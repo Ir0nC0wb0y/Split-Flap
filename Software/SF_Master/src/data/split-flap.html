@@ -9,15 +9,15 @@
             perspective: 20cm;
             perspective-origin: 50% 20%;
         }
-        .splitflap-character, .splitflap-character .flap {
+        .splitflap-character, .splitflap-character .animated-flap {
             width: 2.5rem;
             font-size: 3.5rem;
             line-height: 3.5rem;
         }
-        .splitflap-character, .splitflap-character .flap.flap-current {
+        .splitflap-character, .splitflap-character .animated-flap.flap-current {
             height: 3.5rem;
         }
-        .splitflap-character .flap.flap-current-flipper, .splitflap-character .flap.flap-next-flipper, .splitflap-character .flap.flap-next-top  {
+        .splitflap-character .animated-flap.flap-current-flipper, .splitflap-character .animated-flap.flap-next-flipper, .splitflap-character .animated-flap.flap-next-top  {
             height: 1.75rem; /* half the height of a full flap */
             display: none;
         }
@@ -26,7 +26,7 @@
             transform-style: preserve-3d;
             display: inline-block;
         }
-        .splitflap-character .flap {
+        .splitflap-character .animated-flap {
             background: #222;
             border-radius: 6px;
             font-family: 'Roboto Mono', monospace;
@@ -38,41 +38,41 @@
             overflow: hidden;
             text-align: center;
         }
-        .splitflap-character .flap.flap-current {
+        .splitflap-character .animated-flap.flap-current {
             border-bottom: 2px solid #444;
             box-shadow: 0 4px 16px #000a;
         }
-        .flap.flap-current::after {
+        .animated-flap.flap-current::after {
             content: '';
             position: absolute;
             left: 0; right: 0; top: 50%;
             height: 1px;
             background: #444;
         }
-        .splitflap-character .flap.flap-current-flipper {
+        .splitflap-character .animated-flap.flap-current-flipper {
             transform-origin: bottom;
             transform: rotateX(0deg);
             /* background-image: linear-gradient(transparent, rgba(0, 0, 0, 0.5)); */
         }
-        .splitflap-character .flap.flap-next-flipper {
+        .splitflap-character .animated-flap.flap-next-flipper {
             transform-origin: bottom;
             transform: rotateX(2deg);
         }
-        .splitflap-character .flap.flap-next-flipper span {
+        .splitflap-character .animated-flap.flap-next-flipper span {
             display: inline-block;
             transform: scaleY(-1);
         }
-        .splitflap-character.animate .flap.flap-current-flipper,
-        .splitflap-character.animate .flap.flap-next-flipper {
+        .splitflap-character.animate .animated-flap.flap-current-flipper,
+        .splitflap-character.animate .animated-flap.flap-next-flipper {
             /* animation: flipper 0.75s cubic-bezier(0.6, 0.14, 0.99, 0.24); */
             animation: flipper 600ms cubic-bezier(0.4, 0, 1, 1);
         }
-        .splitflap-character.animate .flap.flap-next-flipper {
+        .splitflap-character.animate .animated-flap.flap-next-flipper {
             animation-delay: 16ms;
         }
-        .splitflap-character.animate .flap.flap-next-top, 
-        .splitflap-character.animate .flap.flap-current-flipper,
-        .splitflap-character.animate .flap.flap-next-flipper {
+        .splitflap-character.animate .animated-flap.flap-next-top, 
+        .splitflap-character.animate .animated-flap.flap-current-flipper,
+        .splitflap-character.animate .animated-flap.flap-next-flipper {
             display: initial;
         }
 
@@ -104,112 +104,112 @@
     <h1>Split Flap Character</h1>    
     <div class="split-flap-panel" style="width: 17rem;">
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
         <div class="splitflap-character">
-            <div class="flap flap-current">A</div>
-            <div class="flap flap-next-top">W</div>
-            <div class="flap flap-current-flipper">A</div>
-            <div class="flap flap-next-flipper"><span>W</span></div>
+            <div class="animated-flap flap-current">A</div>
+            <div class="animated-flap flap-next-top">W</div>
+            <div class="animated-flap flap-current-flipper">A</div>
+            <div class="animated-flap flap-next-flipper"><span>W</span></div>
         </div>
     </div>
     <script>
@@ -220,19 +220,19 @@
             if (currentIndex >= characterSequence.length) {
                 currentIndex = 0; // Reset index after reaching the end
             }
-            const sfcs = Array.from(document.querySelectorAll('.splitflap-character'));
+            const characters = Array.from(document.querySelectorAll('.splitflap-character'));
 
-            const currentCharacterDisplays = sfcs.map(character => Array.from(character.querySelectorAll('.flap.flap-current, .flap.flap-current-flipper'))).flat();
-            const nextCharacterDisplays = sfcs.map(character => Array.from(character.querySelectorAll('.flap.flap-next-top, .flap.flap-next-flipper span'))).flat();
+            const currentCharacterDisplays = characters.map(character => Array.from(character.querySelectorAll('.animated-flap.flap-current, .animated-flap.flap-current-flipper'))).flat();
+            const nextCharacterDisplays = characters.map(character => Array.from(character.querySelectorAll('.animated-flap.flap-next-top, .animated-flap.flap-next-flipper span'))).flat();
 
             for (const nextCharacterDisplay of nextCharacterDisplays) {
                 nextCharacterDisplay.innerText = currentCharacter;
             }
-            for (character of sfcs) {
+            for (character of characters) {
                 character.classList.add('animate');
             }
             setTimeout(() => {
-                for (character of sfcs) {
+                for (character of characters) {
                     character.classList.remove('animate');
                 }
                 for (const currentCharacterDisplay of currentCharacterDisplays) {
