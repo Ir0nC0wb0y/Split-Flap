@@ -20,18 +20,10 @@
             gap: 0.5rem;
         }
         .flap {
-            background: #222;
-            border-radius: 6px;
-            box-shadow: 0 4px 16px #000a;
-            width: 2.5rem;
-            height: 3.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
-            font-family: 'Roboto Mono', monospace;
-            color: #ffe066;
-            border-bottom: 2px solid #444;
             position: relative;
         }
         .flap::after {
@@ -77,12 +69,12 @@
             perspective: 20cm;
             perspective-origin: 50% 20%;
         }
-        .splitflap-character, .splitflap-character .animated-flap {
+        .flap, .splitflap-character, .splitflap-character .animated-flap {
             width: 2.5rem;
             font-size: 3.5rem;
             line-height: 3.5rem;
         }
-        .splitflap-character, .splitflap-character .animated-flap.flap-current {
+        .flap, .splitflap-character, .splitflap-character .animated-flap.flap-current {
             height: 3.5rem;
         }
         .splitflap-character .animated-flap.flap-current-flipper, .splitflap-character .animated-flap.flap-next-flipper, .splitflap-character .animated-flap.flap-next-top  {
@@ -94,19 +86,21 @@
             transform-style: preserve-3d;
             display: inline-block;
         }
-        .splitflap-character .animated-flap {
+        .flap, .splitflap-character .animated-flap {
             background: #222;
             border-radius: 6px;
             font-family: 'Roboto Mono', monospace;
             color: #ffe066;
-
+        }
+            
+        .splitflap-character .animated-flap {
             position: absolute;
             top: 0px;
             left: 0px;
             overflow: hidden;
             text-align: center;
         }
-        .splitflap-character .animated-flap.flap-current {
+        .flap, .splitflap-character .animated-flap.flap-current {
             border-bottom: 2px solid #444;
             box-shadow: 0 4px 16px #000a;
         }
