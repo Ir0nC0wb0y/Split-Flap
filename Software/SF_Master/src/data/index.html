@@ -187,7 +187,7 @@
     <p>
         <label for="letters">Set Letters (A-Z, .:/ and space):</label>
         <form action="/set_letters" method="post">
-            <input type="text" id="letters" name="letters" maxlength="6" pattern="^[A-Za-z0-9 \.\:\/]{0,6}$" required>
+            <input type="text" id="letters" name="letters" maxlength="6" pattern="^[A-Za-z0-9 \.\:\/]{0,6}$" required autocomplete="off">
             <button type="submit">Set</button>
         </form>
         <div id="letters-preview" class="split-flap-panel">
@@ -231,48 +231,60 @@
     </p>
     <script>
         (function updatePreview() {
-            let nextToShow;
-            let changeInProgress;
+            const characters = Array.from(
+                document.querySelectorAll('#letters-preview.split-flap-panel .splitflap-character')
+            )
+                .map(character => {
+                    const currentCharacterDisplay = Array.from(character.querySelectorAll('.animated-flap.flap-current, .animated-flap.flap-current-flipper'));
+                    const nextCharacterDisplay = Array.from(character.querySelectorAll('.animated-flap.flap-next-top, .animated-flap.flap-next-flipper span'));
 
-            const characters = Array.from(document.querySelectorAll('#letters-preview.split-flap-panel .splitflap-character'));
+                    return {
+                        character,
+                        currentCharacterDisplay,
+                        nextCharacterDisplay,
+                        spinning: null,
+                        nextSpin: null,
+                    };
+                });
 
-            const currentCharacterDisplays = characters.map(character => Array.from(character.querySelectorAll('.animated-flap.flap-current, .animated-flap.flap-current-flipper')));
-            const nextCharacterDisplays = characters.map(character => Array.from(character.querySelectorAll('.animated-flap.flap-next-top, .animated-flap.flap-next-flipper span')));
-
+            
             function updateDisplay(letters) {
-                nextToShow = null;
+                letters.forEach((letter, i) => {
+                    const { character, currentCharacterDisplay, nextCharacterDisplay } = characters[i];
+                    function doIt() {
+                        return new Promise(resolve => {
+                            const currentLetter = currentCharacterDisplay[0].innerText;
+                            if (currentLetter === letter || (letter === ' ' && currentLetter === '')) {
+                                resolve(); // No change needed
+                                return;
+                            }
+                            nextCharacterDisplay.forEach(el => el.innerText = letter);
+                            character.classList.add('animate');
 
-                const charactersToAnimate = [];
+                            setTimeout(() => {
+                                character.classList.remove('animate');
+                                currentCharacterDisplay.forEach(el => el.innerText = letter);
 
-                for (let i = 0; i < characters.length; i++) {
-                    const nextLetter = letters[i] || ' ';
-                    for (const nextCharacterDisplay of nextCharacterDisplays[i]) {
-                        if (nextCharacterDisplay.innerText === nextLetter) {
-                            continue; // No change needed
-                        }
-                        charactersToAnimate.push(characters[i]);
-                        nextCharacterDisplay.innerText = nextLetter;
+                                resolve();
+                            }, 600 - 16); // Match the animation duration, minus the last bit of the end (e.g the 16ms of delay) due to a flashing end state (FIXME)
+                        })
+                            .then(() => {
+                                const { spinning, nextSpin } = character;
+                                if (!nextSpin) {
+                                    character.spinning = null;
+                                    return;
+                                }
+                                character.nextSpin = null;
+                                character.spinning = nextSpin();
+                            });
                     }
-                }
-                for (character of charactersToAnimate) {
-                    character.classList.add('animate');
-                }
-                changeInProgress = setTimeout(() => {
-                    for (character of characters) {
-                        character.classList.remove('animate');
+                    if (character.spinning) {
+                        character.nextSpin = doIt;
+                    } else {
+                        character.spinning = doIt();
+                        character.nextSpin = null;
                     }
-                    for (let i = 0; i < characters.length; i++) {
-                        const currentLetter = letters[i] || ' ';
-                        for (const currentCharacterDisplay of currentCharacterDisplays[i]) {
-                            currentCharacterDisplay.innerText = currentLetter;
-                        }
-                    }
-
-                    changeInProgress = false;
-                    if (nextToShow) {
-                        updateDisplay(nextToShow);
-                    }
-                }, 600 - 16); // Match the animation duration, minus the last bit of the end (e.g the 16ms of delay) due to a flashing end state (FIXME)
+                });
             }
 
             document.getElementById('letters').addEventListener('input', function() {
@@ -282,9 +294,8 @@
                     .filter(c => ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/'.includes(c))
                     .slice(0, 6);
 
-                if (changeInProgress) {
-                    nextToShow = letters;
-                    return;
+                if (letters.length < 6) {
+                    letters = letters.concat(Array(6 - letters.length).fill(' '));
                 }
 
                 updateDisplay(letters);
