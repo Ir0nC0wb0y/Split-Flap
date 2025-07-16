@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <WebServer.h>
+#include <FS.h>
+#include <SPIFFS.h>
 
 struct I2CTx_33 {
     byte id = 33;
@@ -28,6 +31,60 @@ struct I2CTx_33 {
   void Demo_Run();
   
 
+// --- Split Flap Web API ---
+WebServer server(80);
+String current_letters = "      "; // Default 6 spaces, update as needed
+
+void handleGetMessage() {
+    server.send(200, "application/json", '"' + current_letters + '"');
+}
+
+void handlePostMessage() {
+    String body = server.arg("plain");
+    if (body.length() == 0) {
+        body = server.arg("letters"); // Fallback for form data
+    }
+    body.toUpperCase();
+    // Validate input
+    for (size_t i = 0; i < body.length(); ++i) {
+        char c = body[i];
+        if (strchr(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/", c) == nullptr) {
+            server.send(400, "text/plain", "Invalid input");
+            return;
+        }
+    }
+    // Pad or truncate to FLAPS_NUM (or 6 for demo)
+    int num_chars = 6; // Change to FLAPS_NUM if needed
+    if (body.length() < num_chars) {
+        for (int i = body.length(); i < num_chars; ++i) {
+            body += ' ';
+        }
+    }
+    if (body.length() > num_chars) body = body.substring(0, num_chars);
+    current_letters = body;
+    // TODO: Send to hardware
+    server.send(200, "text/plain", "OK");
+}
+
+void handleFileRequest() {
+    String path = server.uri();
+    if (path == "/") path = "/index.html";
+    if (!SPIFFS.exists(path)) {
+        server.send(404, "text/plain", "File Not Found");
+        return;
+    }
+    String contentType = "text/plain";
+    if (path.endsWith(".html")) contentType = "text/html";
+    else if (path.endsWith(".css")) contentType = "text/css";
+    else if (path.endsWith(".js")) contentType = "application/javascript";
+    else if (path.endsWith(".png")) contentType = "image/png";
+    else if (path.endsWith(".jpg")) contentType = "image/jpeg";
+    else if (path.endsWith(".ico")) contentType = "image/x-icon";
+    File file = SPIFFS.open(path, "r");
+    server.streamFile(file, contentType);
+    file.close();
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.println();
@@ -35,9 +92,20 @@ void setup() {
   
   Wire.begin(PIN_SDA, PIN_SCL);
 
+  if (!SPIFFS.begin(true)) {
+    Serial.println("SPIFFS Mount Failed");
+    return;
+  }
+
   delay(I2C_BUS_DELAY);
   I2C_Address_Scan();
 
+  // Web API routes
+  server.on("/v1/message", HTTP_GET, handleGetMessage);
+  server.on("/v1/message", HTTP_POST, handlePostMessage);
+  // Serve static files
+  server.onNotFound(handleFileRequest);
+  server.begin();
 }
 
 void loop() {
@@ -46,6 +114,7 @@ void loop() {
   Demo_Run();
 
   delay(5000);
+  server.handleClient();
 }
 
 

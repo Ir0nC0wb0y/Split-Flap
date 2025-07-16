@@ -176,17 +176,21 @@
     <p>
         Current Letters (6):
         <div id="letters-current" class="splitflap">
+            <div class="flap">L</div>
+            <div class="flap">O</div>
             <div class="flap">A</div>
-            <div class="flap">B</div>
-            <div class="flap">C</div>
             <div class="flap">D</div>
-            <div class="flap">E</div>
-            <div class="flap">F</div>
+            <div class="flap">I</div>
+            <div class="flap">N</div>
+            <div class="flap">G</div>
+            <div class="flap">.</div>
+            <div class="flap">.</div>
+            <div class="flap">.</div>
         </div>
     </p>
     <p>
         <label for="letters">Set Letters (A-Z, .:/ and space):</label>
-        <form action="/set_letters" method="post">
+        <form action="/v1/message" method="post">
             <input type="text" id="letters" name="letters" maxlength="6" pattern="^[A-Za-z0-9 \.\:\/]{0,6}$" required autocomplete="off">
             <button type="submit">Set</button>
         </form>
@@ -230,7 +234,84 @@
         </div>
     </p>
     <script>
-        (function updatePreview() {
+        // --- Split Flap API Integration ---
+        const lettersCurrentDiv = document.getElementById('letters-current');
+        const lettersInput = document.getElementById('letters');
+        const form = document.querySelector('form[action="/v1/message"]');
+        let loading = true;
+        let numChars = 6; // Default, will be updated from API
+
+        function setLoadingScreen() {
+            const loadingText = 'LOADING...';
+            const chars = loadingText.split('').slice(0, numChars);
+            lettersCurrentDiv.innerHTML = '';
+            chars.forEach(c => {
+                const flap = document.createElement('div');
+                flap.className = 'flap';
+                flap.innerText = c;
+                lettersCurrentDiv.appendChild(flap);
+            });
+        }
+
+        function setCurrentLetters(letters) {
+            lettersCurrentDiv.innerHTML = '';
+            letters.split('').forEach(c => {
+                const flap = document.createElement('div');
+                flap.className = 'flap';
+                flap.innerText = c;
+                lettersCurrentDiv.appendChild(flap);
+            });
+        }
+
+        async function fetchCurrentMessage() {
+            setLoadingScreen();
+            loading = true;
+            try {
+                const res = await fetch('/v1/message');
+                if (!res.ok) throw new Error('Failed to fetch');
+                const message = await res.json();
+                numChars = message.length;
+                setCurrentLetters(message.padEnd(numChars, ' '));
+                document.querySelector('p').childNodes[0].textContent = `Current Letters (${numChars}):`;
+                updatePreview(numChars);
+            } catch (e) {
+                setLoadingScreen();
+            } finally {
+                loading = false;
+            }
+        }
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const value = lettersInput.value.toUpperCase().replace(/[^A-Z0-9 .:/]/g, '').slice(0, numChars);
+            setLoadingScreen();
+            try {
+                const res = await fetch('/v1/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(value)
+                });
+                if (!res.ok) throw new Error('Failed to set message');
+                await fetchCurrentMessage();
+            } catch (err) {
+                setLoadingScreen();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', fetchCurrentMessage);
+
+        let previewUpdateHandler = null;
+        function updatePreview(numberOfCharacters) {
+            // TODO: avoid innerHTML
+            document.querySelector('#letters-preview').innerHTML = `
+<div class="splitflap-character">
+    <div class="animated-flap flap-current"></div>
+    <div class="animated-flap flap-next-top"></div>
+    <div class="animated-flap flap-current-flipper"></div>
+    <div class="animated-flap flap-next-flipper"><span></span></div>
+</div>`.repeat(numberOfCharacters);
+
+
             const characters = Array.from(
                 document.querySelectorAll('#letters-preview.split-flap-panel .splitflap-character')
             )
@@ -247,7 +328,7 @@
                     };
                 });
 
-            
+
             function updateDisplay(letters) {
                 letters.forEach((letter, i) => {
                     const { character, currentCharacterDisplay, nextCharacterDisplay } = characters[i];
@@ -287,20 +368,24 @@
                 });
             }
 
-            document.getElementById('letters').addEventListener('input', function() {
+            if (previewUpdateHandler) {
+                document.getElementById('letters').removeEventListener('input', previewUpdateHandler);
+            }
+            previewUpdateHandler = function () {
                 let letters = this.value
                     .toUpperCase()
                     .split('')
                     .filter(c => ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/'.includes(c))
-                    .slice(0, 6);
+                    .slice(0, numberOfCharacters);
 
-                if (letters.length < 6) {
-                    letters = letters.concat(Array(6 - letters.length).fill(' '));
+                if (letters.length < numberOfCharacters) {
+                    letters = letters.concat(Array(numberOfCharacters - letters.length).fill(' '));
                 }
 
                 updateDisplay(letters);
-            });
-        }());
+            };
+            document.getElementById('letters').addEventListener('input', previewUpdateHandler);
+        }
     </script>
 </body>
 </html>
