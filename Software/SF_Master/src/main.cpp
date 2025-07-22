@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include <WebServer.h>
 #include <FS.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
 
 struct I2CTx_33 {
     byte id = 33;
@@ -69,8 +69,9 @@ void handlePostMessage() {
 void handleFileRequest() {
     String path = server.uri();
     if (path == "/") path = "/index.html";
-    if (!SPIFFS.exists(path)) {
-        server.send(404, "text/plain", "File Not Found");
+    if (!LittleFS.exists(path)) {
+        server.sendHeader("Location", "/", true);
+        server.send(302, "text/plain", "Resource Not Found");
         return;
     }
     String contentType = "text/plain";
@@ -80,7 +81,7 @@ void handleFileRequest() {
     else if (path.endsWith(".png")) contentType = "image/png";
     else if (path.endsWith(".jpg")) contentType = "image/jpeg";
     else if (path.endsWith(".ico")) contentType = "image/x-icon";
-    File file = SPIFFS.open(path, "r");
+    File file = LittleFS.open(path, "r");
     server.streamFile(file, contentType);
     file.close();
 }
@@ -92,8 +93,8 @@ void setup() {
   
   Wire.begin(PIN_SDA, PIN_SCL);
 
-  if (!SPIFFS.begin(true)) {
-    Serial.println("SPIFFS Mount Failed");
+  if (!LittleFS.begin(true)) {
+    Serial.println("LittleFS Mount Failed");
     return;
   }
 
