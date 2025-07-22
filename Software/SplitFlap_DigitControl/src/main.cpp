@@ -3,6 +3,7 @@
 #include <AccelStepper.h>
 
 #include "expFilter.h"
+#include "I2C_messages.h"
 
 // coil order: blue, pink, yellow, orange
 // wire order: yellow(A), orange(B), pink(C), blue(D)
@@ -22,10 +23,12 @@
 
 // I2C Setup
   void i2c_receiveEvent(int numBytesReceived);
-  //void i2c_requestEvent();
+  void I2C_requestEvent();
   bool newRxData = false;
-  byte msg_id = 0;
+  byte last_msg = 0;
   char msg_char;
+  I2CTx_128 digit_status;
+  void SetDigitStatus(bool status);
 
   // Address Setup
     int i2c_address = 0;
@@ -81,11 +84,13 @@
   int demo_state = 0;
   void Demo_Run();
 
+/*
 // Serial Comms
   int incomingByte = 0; // for incoming serial data
   #define SERIAL_BUFFER_LEN 16
   char message[SERIAL_BUFFER_LEN];
   void Serial_Read_Buffer();
+*/
 
 void setup() {
   // put your setup code here, to run once:
@@ -104,7 +109,7 @@ void setup() {
   // Start I2C bus with address
   Wire.begin(i2c_address);
   Wire.onReceive(i2c_receiveEvent);
-  //Wire.onRequest(i2c_requestEvent);
+  Wire.onRequest(I2C_requestEvent);
 
   // Set up pins
     //pinMode(PIN_MOTOR_A, OUTPUT);
@@ -143,12 +148,12 @@ void loop() {
   if (newRxData) {
     // Display message
     Serial.println("***********");
-    Serial.print(  "Message ID  : "); Serial.println((int)msg_id);
+    Serial.print(  "Message ID  : "); Serial.println((int)last_msg);
     Serial.print(  "Message Char: "); Serial.println(msg_char);
     Serial.println("***********");
     Serial.println();
 
-    if ((int)msg_id == 33) {
+    if ((int)last_msg == 33) {
       // Go to new char
       //Serial.println("Received expected message, moving to new position");
       int flap_id = Flap_Char(msg_char);
@@ -165,6 +170,7 @@ void loop() {
       Endstop_Cross();
     }
     stepper1.disableOutputs();
+    SetDigitStatus(true);
   }
 
   // Force motor recalibration
@@ -178,12 +184,30 @@ void loop() {
 
 void i2c_receiveEvent(int numBytesReceived) {
   if (!newRxData) {
+    // Read first byte (message ID)
     if (Wire.available()){
-      msg_id = Wire.read();
+      last_msg = Wire.read();
     }
-    if (Wire.available()){
-      msg_char = Wire.read();
-    }
+    // put remaining data in appropriate structure
+      // Message 33
+      if (last_msg == 33) {
+        // read remaining message
+        if (Wire.available()){
+          msg_char = Wire.read();
+        }
+      }
+      // Message 34
+      if (last_msg == 34) {
+        // prepare for response
+      }
+
+    // Old single message read
+      /*if (Wire.available()){
+        msg_id = Wire.read();
+      }
+      if (Wire.available()){
+        msg_char = Wire.read();
+      }*/
 
     if (numBytesReceived > 2) {
       // dump the data
@@ -201,6 +225,20 @@ void i2c_receiveEvent(int numBytesReceived) {
   }
 }
 
+void SetDigitStatus(bool status) {
+  if (digit_status.status != status) {
+    digit_status.status = status;
+    Serial.print("Set digit status to: ");
+      Serial.println(status);
+  }
+}
+
+void I2C_requestEvent() {
+  //Wire.write((byte*) &txData, sizeof(txData));
+  if (last_msg == 34) {
+    Wire.write((byte*) &digit_status, MESSAGE_SIZE_128);
+  }
+}
 
 int Address_Calc() {
   bool bit0 = digitalRead(PIN_ADDR_0);
@@ -281,6 +319,9 @@ void Endstop_Cross() {
   long position_error = current_position-flap_pos;
   Serial.print("Position error: ");
     Serial.println(position_error);
+  if (position_error > motor_sr.getValue() * .15) {
+    Motor_Calibrate();
+  }
 
   stepper1.setCurrentPosition(current_position);
   //Serial.print("Updated position: "); Serial.println(stepper1.currentPosition());
@@ -314,6 +355,7 @@ void Endstop_Calibrate() {
 
 void Motor_Calibrate() {
   //is_homed = 2; // set interrupt to calibrate state
+  SetDigitStatus(false);
   motor_turns = -1;
   Serial.print("Current SR value: ");
     Serial.println(motor_sr.getValue());
@@ -392,6 +434,7 @@ void Motor_Home() {
   }
   Serial.println("Motor is Homed!");
   Flap_Move_Offset();
+  SetDigitStatus(true);
 }
 
 void Flap_Move_Offset() {
@@ -428,6 +471,7 @@ int Flap_Char(char incoming_char) {
 
 void Flap_Idx2Pos(int flap_idx) {
   // Calculation for absolute movement
+    SetDigitStatus(false);
     long flap_pos_new = Flap_Pos_Abs(flap_idx);
     long stepper_position = stepper1.currentPosition();
     // new pos > zero pos (must pass go to get to new position)
