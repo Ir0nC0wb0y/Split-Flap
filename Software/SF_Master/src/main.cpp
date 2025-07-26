@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <WiFi.h>
 #include <WebServer.h>
 #include <FS.h>
 #include <LittleFS.h>
@@ -11,8 +12,12 @@
   #define PIN_SCL 22
   #define PIN_SDA 21
 
+// WiFi
+  #define WIFI_CONNECT_TIME 5000
+  void connect2WiFi();
+
 // Digits
-  #define DEBUG_DIGITS 16 // Comment this macro to search for connected digits
+  #define DEBUG_DIGITS 8 // Comment this macro to search for connected digits
   void I2C_Address_Scan();
   void I2C_Message_33(int digit, I2CTx_33 payload);
   bool I2C_Message_34(int digit);
@@ -45,59 +50,59 @@
   
 
 // --- Split Flap Web API ---
-WebServer server(80);
-String current_letters = "      "; // Default 6 spaces, update as needed
+  WebServer server(80);
+  String current_letters = "      "; // Default 6 spaces, update as needed
 
-void handleGetMessage() {
-    server.send(200, "application/json", '"' + current_letters + '"');
-}
+  void handleGetMessage() {
+      server.send(200, "application/json", '"' + current_letters + '"');
+  }
 
-void handlePostMessage() {
-    String body = server.arg("plain");
-    if (body.length() == 0) {
-        body = server.arg("letters"); // Fallback for form data
-    }
-    body.toUpperCase();
-    // Validate input
-    for (size_t i = 0; i < body.length(); ++i) {
-        char c = body[i];
-        if (strchr(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/", c) == nullptr) {
-            server.send(400, "text/plain", "Invalid input");
-            return;
-        }
-    }
-    // Pad or truncate to FLAPS_NUM (or 6 for demo)
-    int num_chars = 6; // Change to FLAPS_NUM if needed
-    if (body.length() < num_chars) {
-        for (int i = body.length(); i < num_chars; ++i) {
-            body += ' ';
-        }
-    }
-    if (body.length() > num_chars) body = body.substring(0, num_chars);
-    current_letters = body;
-    // TODO: Send to hardware
-    server.send(200, "text/plain", "OK");
-}
+  void handlePostMessage() {
+      String body = server.arg("plain");
+      if (body.length() == 0) {
+          body = server.arg("letters"); // Fallback for form data
+      }
+      body.toUpperCase();
+      // Validate input
+      for (size_t i = 0; i < body.length(); ++i) {
+          char c = body[i];
+          if (strchr(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/", c) == nullptr) {
+              server.send(400, "text/plain", "Invalid input");
+              return;
+          }
+      }
+      // Pad or truncate to FLAPS_NUM (or 6 for demo)
+      int num_chars = 6; // Change to FLAPS_NUM if needed
+      if (body.length() < num_chars) {
+          for (int i = body.length(); i < num_chars; ++i) {
+              body += ' ';
+          }
+      }
+      if (body.length() > num_chars) body = body.substring(0, num_chars);
+      current_letters = body;
+      // TODO: Send to hardware
+      server.send(200, "text/plain", "OK");
+  }
 
-void handleFileRequest() {
-    String path = server.uri();
-    if (path == "/") path = "/index.html";
-    if (!LittleFS.exists(path)) {
-        server.sendHeader("Location", "/", true);
-        server.send(302, "text/plain", "Resource Not Found");
-        return;
-    }
-    String contentType = "text/plain";
-    if (path.endsWith(".html")) contentType = "text/html";
-    else if (path.endsWith(".css")) contentType = "text/css";
-    else if (path.endsWith(".js")) contentType = "application/javascript";
-    else if (path.endsWith(".png")) contentType = "image/png";
-    else if (path.endsWith(".jpg")) contentType = "image/jpeg";
-    else if (path.endsWith(".ico")) contentType = "image/x-icon";
-    File file = LittleFS.open(path, "r");
-    server.streamFile(file, contentType);
-    file.close();
-}
+  void handleFileRequest() {
+      String path = server.uri();
+      if (path == "/") path = "/index.html";
+      if (!LittleFS.exists(path)) {
+          server.sendHeader("Location", "/", true);
+          server.send(302, "text/plain", "Resource Not Found");
+          return;
+      }
+      String contentType = "text/plain";
+      if (path.endsWith(".html")) contentType = "text/html";
+      else if (path.endsWith(".css")) contentType = "text/css";
+      else if (path.endsWith(".js")) contentType = "application/javascript";
+      else if (path.endsWith(".png")) contentType = "image/png";
+      else if (path.endsWith(".jpg")) contentType = "image/jpeg";
+      else if (path.endsWith(".ico")) contentType = "image/x-icon";
+      File file = LittleFS.open(path, "r");
+      server.streamFile(file, contentType);
+      file.close();
+  }
 
 void setup() {
   Serial.begin(115200);
@@ -108,11 +113,15 @@ void setup() {
 
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS Mount Failed");
-    return;
+    while(true) {
+      yield();
+    }
   }
 
+  connect2WiFi(); // must be done after LittleFS is successful
+
   // Connect digits
-  delay(I2C_BUS_DELAY);
+  delay(I2C_BUS_DELAY); // shouldn't be necessary if 
   I2C_Address_Scan();
 
   memset(display_chars, '\0', sizeof(display_chars));
@@ -132,6 +141,77 @@ void loop() {
 
   server.handleClient();
 
+}
+
+void connect2WiFi() {
+  // Search for WiFi config files
+  WiFi.mode(WIFI_STA);
+  String WiFi_Path = "/WiFi/";
+  File Wifi_conf = LittleFS.open(WiFi_Path);
+  if (!Wifi_conf) {
+    Serial.println("Failed to open WiFi conf directory");
+  } else if (!Wifi_conf.isDirectory()) {
+    Serial.println("Wifi conf dir not directory");
+  } else {
+    File Wifi_conf_file = Wifi_conf.openNextFile();
+    int n = WiFi.scanNetworks();
+    if (n > 0) {
+      while (Wifi_conf_file) {
+        String conf_name = String(Wifi_conf_file.name());
+        Serial.print("Filename '");
+          Serial.print(conf_name);
+          Serial.print("' ends with .conf: ");
+          Serial.println(conf_name.endsWith(".conf"));
+        if (!Wifi_conf_file.isDirectory() && conf_name.endsWith(".conf")) {
+          Serial.println("Found WiFi Config File");
+          // Read file contents
+            // Line 1: AP name
+            String AP_name = Wifi_conf_file.readStringUntil('\n');
+            const char* AP_name_char = AP_name.c_str();
+            // Line 2: AP password
+            String AP_pass = Wifi_conf_file.readStringUntil('\n');
+            const char* AP_pass_char = AP_pass.c_str();
+          
+          // Check if AP exists
+          Serial.print("Searching for AP: ");
+            Serial.print(AP_name);
+          
+          bool AP_exists = false;
+          for (int i = 0; i < n; ++i) {
+            Serial.print(".");
+            if (WiFi.SSID(i) == AP_name) {
+              AP_exists = true;
+              Serial.println(" Found!");
+              break;
+            }
+          }
+          if (!AP_exists) {
+            Serial.println(" not found!");
+          }
+
+          if (AP_exists) {
+            // Attempt to connect
+            Serial.print("Connecting to AP: ");
+              Serial.print(AP_name);
+              Serial.print(" ");
+            WiFi.begin(AP_name_char,AP_pass_char);
+            unsigned long connect_time = millis();
+            while (WiFi.status() != WL_CONNECTED || connect_time <= WIFI_CONNECT_TIME) {
+              Serial.print(".");
+              delay(100);
+            }
+            if (WiFi.status() == WL_CONNECTED) {
+              Serial.println(" Success!");
+              break; // break out of file loop
+            } else {
+              Serial.print(" Failed!");
+            }
+          }
+        }
+        Wifi_conf_file = Wifi_conf.openNextFile();
+      }
+    }
+  }
 }
 
 
