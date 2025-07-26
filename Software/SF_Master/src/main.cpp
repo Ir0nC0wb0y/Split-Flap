@@ -129,8 +129,7 @@ void loop() {
   // Scan for addresses
   
   Demo_Run();
-  
-  delay(5000);
+
   server.handleClient();
 
 }
