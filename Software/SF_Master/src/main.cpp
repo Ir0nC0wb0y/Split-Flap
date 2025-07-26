@@ -12,7 +12,7 @@
   #define PIN_SDA 21
 
 // Digits
-  #define DEBUG_DIGITS 8 // Comment this macro to search for connected digits
+  #define DEBUG_DIGITS 16 // Comment this macro to search for connected digits
   void I2C_Address_Scan();
   void I2C_Message_33(int digit, I2CTx_33 payload);
   bool I2C_Message_34(int digit);
@@ -129,9 +129,10 @@ void loop() {
   // Scan for addresses
   
   Demo_Run();
-
+  
   delay(5000);
   server.handleClient();
+
 }
 
 
@@ -182,6 +183,7 @@ void I2C_Address_Scan() {
 void send_character(int digit, char payload) {
   // check status
   bool digit_status = false;
+  display_chars[digit] = payload;
   while (!digit_status) {
     digit_status = I2C_Message_34(digit);
     delay(100);
@@ -203,15 +205,17 @@ void I2C_Message_33(int digit, I2CTx_33 payload) {
       Wire.beginTransmission(send_addr);
       Wire.write((byte*) &payload, sizeof(payload));
       Wire.endTransmission();    // this is what actually sends the data
-    #endif
 
-    Serial.print("Sent id ");
+      Serial.print("Sent id ");
       Serial.print(payload.id);
       Serial.print(" ");
       Serial.print(payload.payload);
       Serial.print(" to ");
       Serial.print(send_addr,HEX);
       Serial.println();
+    #endif
+
+    
   } else {
     Serial.print("Invalid address: ");
       Serial.println(send_addr);
@@ -258,14 +262,16 @@ void Display_PrettySerial() {
     Serial.print(address_list[i]);
       Serial.print(" ");
   }
-  
+  Serial.println();
+
   for (int i=0; i<address_count; i++) {
     Serial.print(" ");
       Serial.print(display_chars[i]);
       if (i < address_count-1) {
-        Serial.print("");
+        Serial.print(" ");
       }
   }
+  Serial.println();
 }
 
 void Demo_Run(bool all_digits) {
@@ -310,12 +316,14 @@ char Demo_NewChar(int demo_state) {
   }
 
   char new_char = char_order[new_char_idx];
+  /*
   if (demo_state < FLAPS_NUM) {
     Serial.print("Cycle to character: ");
   } else {
     Serial.print("Random character: ");
   }
   Serial.println(new_char);
+  */
 
   return new_char;
 }
