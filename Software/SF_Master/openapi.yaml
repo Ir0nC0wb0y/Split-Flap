@@ -1,0 +1,36 @@
+openapi: 3.1.0
+info:
+  version: 1.0.0
+  title: Spli Flap API
+  description: Manage a Split Flap display
+servers:
+  - url: http://192.168.1.2/
+paths:
+  /v1/message:
+    get:
+      description: Returns a string of the current letters displayed on the Split Flap
+      responses:
+        '200':
+          description: Successfully returned the current letters
+          content:
+            application/json:
+              schema:
+                type: string
+    post:
+      description: Sets the letters displayed on the Split Flap. If the input shorter than the character blocks connected, it will be padded with spaces. If the input is longer, it will be truncated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+              pattern: '^[A-Z0-9 \.\:\/]+$'
+          application/x-www-form-urlencoded:
+            schema:
+              type: string
+              pattern: '^[A-Z0-9 \.\:\/]+$'
+      responses:
+        '200':
+          description: Successfully set the letters
+        '400':
+          description: Invalid input
