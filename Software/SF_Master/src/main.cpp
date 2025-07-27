@@ -14,6 +14,9 @@
 
 // WiFi
   #define WIFI_CONNECT_TIME 5000
+  #define WIFI_HOSTNAME "SF-Master"
+  #define WIFI_AP_SSID "SplitFlap"
+  #define WIFI_AP_PASS "SomeSecurePassword"
   void connect2WiFi();
 
 // Digits
@@ -145,6 +148,7 @@ void loop() {
 
 void connect2WiFi() {
   // Search for WiFi config files
+  WiFi.setHostname(WIFI_HOSTNAME);
   WiFi.mode(WIFI_STA);
   String WiFi_Path = "/WiFi/";
   File Wifi_conf = LittleFS.open(WiFi_Path);
@@ -193,7 +197,7 @@ void connect2WiFi() {
             unsigned long connect_time = millis();
             while (WiFi.status() != WL_CONNECTED || connect_time <= WIFI_CONNECT_TIME) {
               Serial.print(".");
-              delay(500);
+              delay(100);
             }
             if (WiFi.status() == WL_CONNECTED) {
               Serial.println(" Success!");
@@ -206,6 +210,16 @@ void connect2WiFi() {
         Wifi_conf_file = Wifi_conf.openNextFile();
       }
     }
+    if (WiFi.status() != WL_CONNECTED) {
+      WiFi.mode(WIFI_AP);
+      WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASS);
+      IPAddress IP = WiFi.softAPIP();
+      Serial.print("AP IP address: ");
+      Serial.println(IP);
+    } else {
+      Serial.print("IP address: ");
+      Serial.println(WiFi.localIP());
+    }
   }
 }
 
@@ -214,7 +228,7 @@ void I2C_Address_Scan() {
   byte error, address;
   int nDevices = 0;
 
-  Serial.println("Scanning...");
+  Serial.println("Scanning for connected digits...");
 
   #ifdef DEBUG_DIGITS
     for(int digit = 0; digit <DEBUG_DIGITS; digit++) {
