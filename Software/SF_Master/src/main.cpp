@@ -154,31 +154,26 @@ void connect2WiFi() {
     Serial.println("Wifi conf dir not directory");
   } else {
     File Wifi_conf_file = Wifi_conf.openNextFile();
-    int n = WiFi.scanNetworks();
-    if (n > 0) {
+    int n_SSIDs = WiFi.scanNetworks();
+    if (n_SSIDs > 0) {
       while (Wifi_conf_file) {
         String conf_name = String(Wifi_conf_file.name());
-        Serial.print("Filename '");
-          Serial.print(conf_name);
-          Serial.print("' ends with .conf: ");
-          Serial.println(conf_name.endsWith(".conf"));
         if (!Wifi_conf_file.isDirectory() && conf_name.endsWith(".conf")) {
-          Serial.println("Found WiFi Config File");
+          Serial.print("Found WiFi Config File: ");
+            Serial.println(conf_name);
           // Read file contents
-            // Line 1: AP name
-            String AP_name = Wifi_conf_file.readStringUntil('\n');
-            const char* AP_name_char = AP_name.c_str();
-            // Line 2: AP password
-            String AP_pass = Wifi_conf_file.readStringUntil('\n');
-            const char* AP_pass_char = AP_pass.c_str();
+          // Line 1: AP name
+          String AP_name = Wifi_conf_file.readStringUntil('\n');
+          const char* AP_name_char = AP_name.c_str();
+          // Line 2: AP password
+          String AP_pass = Wifi_conf_file.readStringUntil('\n');
+          const char* AP_pass_char = AP_pass.c_str();
           
           // Check if AP exists
           Serial.print("Searching for AP: ");
             Serial.print(AP_name);
-          
           bool AP_exists = false;
-          for (int i = 0; i < n; ++i) {
-            Serial.print(".");
+          for (int i = 0; i < n_SSIDs; ++i) {
             if (WiFi.SSID(i) == AP_name) {
               AP_exists = true;
               Serial.println(" Found!");
@@ -198,7 +193,7 @@ void connect2WiFi() {
             unsigned long connect_time = millis();
             while (WiFi.status() != WL_CONNECTED || connect_time <= WIFI_CONNECT_TIME) {
               Serial.print(".");
-              delay(100);
+              delay(500);
             }
             if (WiFi.status() == WL_CONNECTED) {
               Serial.println(" Success!");
