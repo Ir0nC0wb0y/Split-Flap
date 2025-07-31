@@ -4,6 +4,10 @@
 #include <WebServer.h>
 #include <FS.h>
 #include <LittleFS.h>
+//#include <AsyncTCP.h>
+//#include <ESPAsyncWebServer.h>
+#include <WiFiUdp.h>
+#include <NTP.h>
 
 // Message structure
 #include "I2C_messages.h"
@@ -34,19 +38,63 @@
   #define FLAPS_NUM 40
   const char char_order[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
 
+// NTP & Date/Time
+  WiFiUDP ntpUDP;
+  NTP ntp(ntpUDP);
+  void handle_time();
+  #define NTP_UPDATE_PERIOD 900000 // 900 seconds, or 15 minutes
+  // Time
+    int time_hour_raw = 0;
+    int time_hour     = 0;
+    int time_minute   = 0;
+  // Date
+    int date_year     = 0;
+    int date_month    = 0;
+    int date_day      = 0;
+  // Timezone
+    const char* TZ_STD = "CST";
+    const char* TZ_DST = "CDT";
+    const char* NTP_server = "north-america.pool.ntp.org";
+    long utcOffsetInSeconds_DST  = -300; // UTC Offset, minutes
+    long utcOffsetInSeconds_STD  = -360; // UTC Offset, minutes
+    bool dst_flag                = 1; // flag whether to perform DST
+    bool dst_state               = 1; // flag for current DST state\
+    // DST START
+      // DST starts on the second sunday of March
+      #define TZ_DST_WEEK            Second
+      #define TZ_DST_WDAY            Sun
+      #define TZ_DST_MONTH           Mar
+      #define TZ_DST_HOUR            2
+    // DST END
+      // DST Ends the first sunday of November
+      #define TZ_STD_WEEK            First
+      #define TZ_STD_WDAY            Sun
+      #define TZ_STD_MONTH           Nov
+      #define TZ_STD_HOUR            3
+
 // Display Functions
   char display_chars[33]; // global display
+  unsigned long display_framerate = 5000;
+  unsigned long display_frame_last = 0;
+  int frame_ID_last = -1;
   void send_character(int digit, char payload);
+  void HandleDisplay();
+  int frame_IDs[]   = {1, 2, 3, 4, 99}; // update to keep consistent
+  int frame_valid[] = {0, 0, 0, 0,  0}; // boolean turn on
   // Pretty Serial
   void Display_PrettySerial();
-  // Countdown
-  // Display Message(s)
-  // Discord Message
-  // Time
-
-  // Demo Function
-    #define DEMO_PAUSE_TIME 2000
-    unsigned long demo_pause_last = 0;
+  // Countdown            (frame ID:  1)
+    time_t countdown_event = 1755468000; // value used for testing, should equate to 8/17/25 @ 17:00:00 CDT
+    void Display_Countdown();
+  // Display Message(s)   (frame ID:  2)
+  // Time                 (frame ID:  3)
+    void Display_Time();
+  // Date                 (frame ID:  4)
+    void Display_Date();
+  // Discord Message      (frame ID: XX)
+  // Demo Function        (frame ID: 99)
+    //#define DEMO_PAUSE_TIME 2000
+    //unsigned long demo_pause_last = 0;
     int demo_state = 40;
     void Demo_Run(bool all_digits = false);
     char Demo_NewChar(int demo_state);
@@ -54,6 +102,7 @@
 
 // --- Split Flap Web API ---
   WebServer server(80);
+  //AsyncWebServer server(80);
   String current_letters = "      "; // Default 6 spaces, update as needed
 
   void handleGetMessage() {
@@ -135,12 +184,17 @@ void setup() {
   // Serve static files
   server.onNotFound(handleFileRequest);
   server.begin();
+
+  // NTP Setup
+  ntp.updateInterval(NTP_UPDATE_PERIOD);
+  ntp.ruleDST(TZ_DST, TZ_DST_WEEK, TZ_DST_WDAY, TZ_DST_MONTH, TZ_DST_HOUR, utcOffsetInSeconds_DST);
+  ntp.ruleSTD(TZ_STD,  TZ_STD_WEEK, TZ_STD_WDAY, TZ_STD_MONTH, TZ_STD_HOUR, utcOffsetInSeconds_STD);
+  ntp.begin(NTP_server);
 }
 
 void loop() {
   // Scan for addresses
-  
-  Demo_Run();
+  handle_time();
 
   server.handleClient();
 
@@ -337,9 +391,80 @@ bool I2C_Message_34(int digit) {
     #endif
   return digit_status;
 }
+
+void handle_time() {
+  ntp.update();
+
+}
+
+
 //################################################################################
 //###                         Display Functions                                ###
 //################################################################################
+  // Countdown            (frame ID:  1)
+  // Display Message(s)   (frame ID:  2)
+  // Time                 (frame ID:  3)
+  // Date                 (frame ID:  4)
+  // Discord Message      (frame ID: XX)
+  // Demo                 (frame ID: 99)
+
+void HandleDisplay() {
+  // check timing
+  if (display_frame_last + display_framerate <= millis()) {
+    int frame_next = -1;
+    // check for next "turned on" frame type
+    int Frame_ArrayLength = sizeof(frame_valid) / sizeof(frame_valid[0]);
+    for (int i=0; i < Frame_ArrayLength; i++) {
+      if (frame_valid[i]) {
+        if (frame_IDs[i] > frame_ID_last) {
+          frame_next = frame_IDs[i];
+          break;
+        }
+      }
+    }
+    if (frame_next == 0) {
+      Serial.println("Next frame not found, wrapping around");
+      for (int i=0; i < Frame_ArrayLength; i++) {
+        if (frame_valid[i]) {
+          frame_next = frame_IDs[i];
+          break;
+        }
+      }
+    }
+    Serial.print("Found next frame: ");
+      Serial.print(frame_next);
+    // run frame function
+    switch (frame_next) {
+      case 1:
+        Serial.println("Displaying countdown");
+        Display_Countdown();
+        break;
+
+      case 2:
+        Serial.println("Displaying message");
+        break;
+
+      case 3:
+        Serial.println("Displaying Time");
+        Display_Time();
+        break;
+      
+      case 4:
+        Serial.println("Displaying Date");
+        Display_Date();
+        break;
+
+      case 99:
+        Serial.println("Displaying Demo");
+        Demo_Run();
+        break;
+    }
+  }
+
+  #ifdef DEBUG_DIGITS
+    Display_PrettySerial();
+  #endif
+}
 
 void Display_PrettySerial() {
   // Output looks like:
@@ -362,10 +487,60 @@ void Display_PrettySerial() {
   Serial.println();
 }
 
+void Display_Countdown() {
+  time_t time_now = ntp.epoch();
+  double countdown_seconds = difftime(countdown_event, time_now);
+  // Convert the time
+    // if countdown_seconds > {seconds in year}
+    // if countdown_seconds > {seconds in month??}
+    // if countdown_seconds > {seconds in }
+  // Now figure out what you can display, based on how many {largest units}
+    // Units:
+      // Y - year
+      // M - month ??
+      // W - weeks ??
+      // D - day
+      // H - Hour
+      // M - Minutes
+    // 3 digits: up to 2 digit number and unit
+    // 4 digits: up to 3 digit number and unit
+    // 6 digits: up to (2) 2 digit numbers and their units
+    // 7 digits: (1) 3 digit number and (1) 2 digit number and units
+    // 8 digits: up to (2) 3 digit numbers and their units
+    // 9 digits: up to (3) 2 digit numbers and their units
+}
+
+void Display_Time() {
+  // needs to change format based on number of characters
+  if (address_count >= 5) {
+    // center time in digits, preferring fewer spaces left
+  } else if (address_count == 4) {
+    // remove colon
+  } else {
+    // remove time frame validity
+  }
+}
+
+void Display_Date() {
+  // needs to change format based on number of characters
+  if (address_count >= 10) {
+    // Date format: MM/DD/YYYY
+    // center date in digits, preferring fewer spaces to the left
+  } else if (address_count >= 8) {
+    // Date Format: MM/DD/YY
+    // center date in digits, preferring fewer spaces to the left
+  } else if (address_count >= 5) {
+    // Date Format: MM/DD
+    // center date in digits, preferring fewer spaces to the left
+  } else {
+    // remove date frame validity
+  }
+}
+
 void Demo_Run(bool all_digits) {
   // the all_digits flag toggles whether all digits are the same random character,
   // or independent random characters
-  if (demo_pause_last + DEMO_PAUSE_TIME <= millis()) {
+  //if (demo_pause_last + DEMO_PAUSE_TIME <= millis()) {
     if (all_digits) {
       // Pick new character
       char all_char = Demo_NewChar(demo_state);
@@ -384,13 +559,9 @@ void Demo_Run(bool all_digits) {
         send_character(i, new_char);
       }
     }
-
-    #ifdef DEBUG_DIGITS
-      Display_PrettySerial();
-    #endif
     
-    demo_pause_last = millis();
-  }
+    //demo_pause_last = millis();
+  //}
 }
 
 char Demo_NewChar(int demo_state) {
