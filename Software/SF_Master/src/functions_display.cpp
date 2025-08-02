@@ -10,6 +10,14 @@
   // Discord Message      (frame ID: XX)
   // Demo                 (frame ID: 99)
 
+// local variables
+  int frame_ID_last = -1;
+  int frame_IDs[5]   = {1, 2, 3, 4, 99}; // update to keep consistent
+  int frame_valid[5] = {0, 0, 0, 0,  0}; // boolean turn on
+  int demo_state = 40;
+  unsigned long display_frame_last = 0;
+  int time_hour = 0;
+
 void HandleDisplay() {
   // check timing
   if (display_frame_last + display_framerate <= millis()) {
@@ -24,7 +32,7 @@ void HandleDisplay() {
         }
       }
     }
-    if (frame_next == 0) {
+    if (frame_next == -1) {
       Serial.println("Next frame not found, wrapping around");
       for (int i=0; i < Frame_ArrayLength; i++) {
         if (frame_valid[i]) {

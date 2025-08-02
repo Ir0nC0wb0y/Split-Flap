@@ -1,5 +1,7 @@
 #include "functions_wifi.h"
 
+unsigned long last_wifi_check = 0;
+
 void connect2WiFi() {
   // Search for WiFi config files
   WiFi.setHostname(WIFI_HOSTNAME);
@@ -55,6 +57,7 @@ void connect2WiFi() {
             }
             if (WiFi.status() == WL_CONNECTED) {
               Serial.println(" Success!");
+              last_wifi_check = millis();
               break; // break out of file loop
             } else {
               Serial.print(" Failed!");
@@ -78,5 +81,14 @@ void connect2WiFi() {
 }
 
 void checkWiFi() {
-    
+  if (last_wifi_check + WIFI_CHECK_TIME <= millis()) {
+    if (!WL_CONNECTED) {
+      Serial.println("Oh no! WiFi is not connected!");
+      // attempt to reconnect to WiFi
+        // if unsuccessful, attempt to connect to know networks
+      // What else needs to happen?
+        // reconnect to udp/ntp?
+    }
+    last_wifi_check = millis();
+  }
 }

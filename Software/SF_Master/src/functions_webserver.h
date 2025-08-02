@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FUNCTIONS_WEBSERVER_H
+#define FUNCTIONS_WEBSERVER_H
 #include <Arduino.h>
 
 #include <FS.h>
@@ -14,3 +15,5 @@ void setup_webserver();
 void handleGetMessage();
 void handlePostMessage();
 void handleFileRequest();
+
+#endif

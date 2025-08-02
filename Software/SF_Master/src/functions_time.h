@@ -1,4 +1,6 @@
-#pragma once
+#ifndef FUNCTIONS_TIME_H
+#define FUNCTIONS_TIME_H
+
 #include <Arduino.h>
 
 #include <WiFiUdp.h>
@@ -23,24 +25,25 @@
 // NTP
   extern WiFiUDP ntpUDP;
   extern NTP ntp;
-// Time
-  extern int time_hour_raw;
-  extern int time_hour;
-  extern int time_minute;
-// Date
-  extern int date_year;
-  extern int date_month;
-  extern int date_day;
-// Timezone
-  extern const char* TZ_STD;
-  extern const char* TZ_DST;
-  extern const char* NTP_server;
-  extern long utcOffsetInSeconds_DST; // UTC Offset, minutes
-  extern long utcOffsetInSeconds_STD; // UTC Offset, minutes
-  extern bool dst_flag; // flag whether to perform DST
-  extern bool dst_state; // flag for current DST state
+  // Time
+    extern int time_hour_raw;
+    //int time_hour     = 0;
+    extern int time_minute;
+  // Date
+    extern int date_year;
+    extern int date_month;
+    extern int date_day;
+  // Timezone
+    extern const char* TZ_STD;
+    extern const char* TZ_DST;
+    extern const char* NTP_server;
+    extern long utcOffsetInSeconds_DST; // UTC Offset, minutes
+    extern long utcOffsetInSeconds_STD; // UTC Offset, minutes
+    extern bool dst_flag; // flag whether to perform DST
+    extern bool dst_state; // flag for current DST state
   
 // Collect functions
 void setup_time();
 void handle_time();
 
+#endif

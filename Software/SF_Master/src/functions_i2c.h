@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FUNCTIONS_I2C_H
+#define FUNCTIONS_I2C_H
 #include <Arduino.h>
 
 #include <Wire.h>
@@ -18,3 +19,5 @@ extern char display_chars[33];
 void I2C_Address_Scan();
 void I2C_Message_33(int digit, I2CTx_33 payload);
 bool I2C_Message_34(int digit);
+
+#endif
