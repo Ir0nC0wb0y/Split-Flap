@@ -19,15 +19,21 @@
     bool dst_flag                = 1; // flag whether to perform DST
     bool dst_state               = 1; // flag for current DST state
   // Display Options
-    unsigned long display_framerate = 5000;
+    unsigned long display_framerate = 5000; // there will be a minimum value
     bool use_12_hr_time = true;
+    bool countdown_years_show   = true;
+    bool countdown_months_show  = true;
+    bool countdown_weeks_show   = true;
+    bool countdown_days_show    = true;
+    bool countdown_hours_show   = true;
+    bool countdown_minutes_show = true;
     time_t countdown_event = 1755468000; // value used for testing, should equate to 8/17/25 @ 17:00:00 CDT
 
 
 // I2C
   #include "functions_i2c.h"
   byte address_list[32];
-  int address_count = -1;
+  int address_count = 0;
 
 // WiFi
   #include "functions_wifi.h"
@@ -86,4 +92,6 @@ void loop() {
   server.handleClient();
 
   checkWiFi();
+
+  HandleDisplay();
 }

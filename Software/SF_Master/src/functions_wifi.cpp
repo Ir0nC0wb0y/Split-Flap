@@ -50,8 +50,8 @@ void connect2WiFi() {
               Serial.print(AP_name);
               Serial.print(" ");
             WiFi.begin(AP_name_char,AP_pass_char);
-            unsigned long connect_time = millis();
-            while (WiFi.status() != WL_CONNECTED || connect_time <= WIFI_CONNECT_TIME) {
+            unsigned long connect_start = millis();
+            while (WiFi.status() != WL_CONNECTED && millis() - connect_start <= WIFI_CONNECT_TIME) {
               Serial.print(".");
               delay(100);
             }
@@ -82,12 +82,15 @@ void connect2WiFi() {
 
 void checkWiFi() {
   if (last_wifi_check + WIFI_CHECK_TIME <= millis()) {
+    Serial.print("Checking for WiFi: ");
     if (!WL_CONNECTED) {
       Serial.println("Oh no! WiFi is not connected!");
       // attempt to reconnect to WiFi
         // if unsuccessful, attempt to connect to know networks
       // What else needs to happen?
         // reconnect to udp/ntp?
+    } else {
+      Serial.println(" ... Good!");
     }
     last_wifi_check = millis();
   }

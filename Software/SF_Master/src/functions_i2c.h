@@ -6,6 +6,8 @@
 
 #include "I2C_messages.h"
 
+#define DEBUG_DIGITS 8
+
 #define PIN_SCL 22
 #define PIN_SDA 21
 #define I2C_BUS_DELAY 1000 // Wait a moment before scanning to give slower digits a chance to join the bus

@@ -2,11 +2,13 @@
 
 void setup_webserver() {
   // Web API routes
+  Serial.print("Setting up Webserver ...");
   server.on("/v1/message", HTTP_GET, handleGetMessage);
   server.on("/v1/message", HTTP_POST, handlePostMessage);
   // Serve static files
   server.onNotFound(handleFileRequest);
   server.begin();
+  Serial.println(" Success!");
 }
 
 void handleGetMessage() {

@@ -6,9 +6,12 @@
 #include "functions_time.h"
 
 #define FLAPS_NUM 40
-const char char_order[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
-
-
+#define COUNTDOWN_SEC_YEAR  31536000
+#define COUNTDOWN_SEC_MON    2419200
+#define COUNTDOWN_SEC_WEEK    604800
+#define COUNTDOWN_SEC_DAY      86400
+#define COUNTDOWN_SEC_HOUR      3600
+#define COUNTDOWN_SEC_MIN         60
 
 // Settings from main
   extern char display_chars[33]; // global display
@@ -16,6 +19,12 @@ const char char_order[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
   extern unsigned long display_framerate;
   //extern unsigned long display_frame_last;
   extern time_t countdown_event;
+  extern bool   countdown_years_show;
+  extern bool   countdown_months_show;
+  extern bool   countdown_weeks_show;
+  extern bool   countdown_days_show;
+  extern bool   countdown_hours_show;
+  extern bool   countdown_minutes_show;
 
 // Values taken from "functions_time"
   // Time
@@ -41,5 +50,7 @@ void HandleDisplay();
 // Demo Function        (frame ID: 99)
   void Demo_Run(bool all_digits = false);
   char Demo_NewChar(int demo_state);
+
+void ClearDisplay();
 
 #endif
