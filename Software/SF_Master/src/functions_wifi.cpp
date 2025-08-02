@@ -86,7 +86,8 @@ void checkWiFi() {
     if (!WL_CONNECTED) {
       Serial.println("Oh no! WiFi is not connected!");
       // attempt to reconnect to WiFi
-        // if unsuccessful, attempt to connect to know networks
+        // if unsuccessful, attempt to connect to know nnetworks
+          // if still unsuccessful, revert to AP
       // What else needs to happen?
         // reconnect to udp/ntp?
     } else {

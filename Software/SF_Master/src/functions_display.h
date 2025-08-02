@@ -14,7 +14,6 @@
 #define COUNTDOWN_SEC_MIN         60
 
 // Settings from main
-  extern char display_chars[33]; // global display
   extern String display_string;
   extern bool use_12_hr_time;
   extern unsigned long display_framerate;

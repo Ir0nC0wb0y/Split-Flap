@@ -49,7 +49,6 @@
 // Display Functions
   static String character_order = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
   #include "functions_display.h"
-  char display_chars[33]; // global display
   String display_string;
   const char char_order[41] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
   
@@ -93,9 +92,6 @@ void setup() {
     }
     
   }
-  
-
-  memset(display_chars, '\0', sizeof(display_chars));
 
   setup_webserver();
 

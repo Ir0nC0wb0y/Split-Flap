@@ -21,8 +21,8 @@
 void HandleDisplay() {
   // check timing
   if (display_frame_last + display_framerate <= millis()) {
-    Serial.print("Framerate: ");
-      Serial.println(display_framerate);
+    //Serial.print("Framerate: ");
+    //  Serial.println(display_framerate);
     
     // Clear frame
     ClearDisplay();
@@ -97,16 +97,6 @@ void Display_PrettySerial() {
   }
   Serial.println();
 
-  // Character array
-  /*for (int i=0; i<address_count; i++) {
-    Serial.print(" ");
-      Serial.print(display_chars[i]);
-      if (i < address_count-1) {
-        Serial.print(" ");
-      }
-  }
-  Serial.println();*/
-
   // String
   for (int i=0; i< address_count; i++) {
     Serial.print(" ");
@@ -126,15 +116,10 @@ void Display_Countdown() {
   Serial.print("Countdown seconds: ");
     Serial.println(countdown_seconds);
   long countdown[6] = {0, 0, 0, 0, 0, 0};
-  //long countdown_years   = 0;
-  //long countdown_months  = 0;
-  //long countdown_weeks   = 0;
-  //long countdown_days    = 0;
-  //long countdown_hours   = 0;
-  //long countdown_minutes = 0;
   bool disp_unit[6] = {0, 0, 0, 0, 0, 0};
 
   // Convert the time
+    // Years
     if (countdown_years_show && countdown_seconds >= COUNTDOWN_SEC_YEAR) {
       countdown[0]   = floor(countdown_seconds/COUNTDOWN_SEC_YEAR);
       countdown_seconds -= countdown[0] * COUNTDOWN_SEC_YEAR;
@@ -144,6 +129,7 @@ void Display_Countdown() {
         Serial.print(" remaining seconds: ");
         Serial.println(countdown_seconds);
     }
+    // Months
     if (countdown_months_show && countdown_seconds >= COUNTDOWN_SEC_MON) {
       countdown[1]   = floor(countdown_seconds/COUNTDOWN_SEC_MON);
       countdown_seconds -= countdown[1] * COUNTDOWN_SEC_MON;
@@ -153,6 +139,7 @@ void Display_Countdown() {
         Serial.print(" remaining seconds: ");
         Serial.println(countdown_seconds);
     }
+    // Weeks
     if (countdown_weeks_show && countdown_seconds >= COUNTDOWN_SEC_WEEK) {
       countdown[2]   = floor(countdown_seconds/COUNTDOWN_SEC_WEEK);
       countdown_seconds -= countdown[2] * COUNTDOWN_SEC_WEEK;
@@ -162,6 +149,7 @@ void Display_Countdown() {
         Serial.print(" remaining seconds: ");
         Serial.println(countdown_seconds);
     }
+    // Days
     if (countdown_days_show && countdown_seconds >= COUNTDOWN_SEC_DAY) {
       countdown[3]   = floor(countdown_seconds/COUNTDOWN_SEC_DAY);
       countdown_seconds -= countdown[3] * COUNTDOWN_SEC_DAY;
@@ -171,6 +159,7 @@ void Display_Countdown() {
         Serial.print(" remaining seconds: ");
         Serial.println(countdown_seconds);
     }
+    // Hours
     if (countdown_hours_show && countdown_seconds >= COUNTDOWN_SEC_HOUR) {
       countdown[4]   = floor(countdown_seconds/COUNTDOWN_SEC_HOUR);
       countdown_seconds -= countdown[4] * COUNTDOWN_SEC_HOUR;
@@ -180,6 +169,7 @@ void Display_Countdown() {
         Serial.print(" remaining seconds: ");
         Serial.println(countdown_seconds);
     }
+    // Minutes
     if (countdown_minutes_show && countdown_seconds >= COUNTDOWN_SEC_MIN) {
       countdown[5]   = floor(countdown_seconds/COUNTDOWN_SEC_MIN);
       countdown_seconds -= countdown[5] * COUNTDOWN_SEC_MIN;
@@ -192,61 +182,10 @@ void Display_Countdown() {
 
 
   // build message, cut to size
-  //char countdown_message[33];
   String countdown_string;
-  //bool length_reached = false;
-  //int countdown_message_idx = 0;
-  //int unit_length[6] = {0, 0, 0, 0, 0, 0};
-  //memset(display_chars, '\0', sizeof(display_chars));
   for (int i = 0; i<6; i++) {
     String unit_msg;
-    //bool started_chars = false;
-    //int unit_length_temp = 0;
     if (disp_unit[i]) {
-      /*
-      unit_length_temp = 1;
-      int digit = floor((countdown[i]% 10000)/1000);
-      if (digit > 0) {
-        // pick up the thousandths digit
-        started_chars = true;
-        unit_length_temp++;
-        char char_digit = '0' + digit;
-        //Serial.print(char_digit);
-        countdown_message[countdown_message_idx] = char_digit;
-        countdown_message_idx++;
-      }
-      digit = floor((countdown[i]% 1000)/100);
-      if (digit > 0 || started_chars) {
-        // pick up the hundreds digit
-        started_chars = true;
-        unit_length_temp++;
-        char char_digit = '0' + digit;
-        //Serial.print(char_digit);
-        countdown_message[countdown_message_idx] = char_digit;
-        countdown_message_idx++;
-      }
-      digit = floor((countdown[i]% 100)/10);
-      if (digit > 0 || started_chars) {
-        // pick up the hundreds digit
-        started_chars = true;
-        unit_length_temp++;
-        char char_digit = '0' + digit;
-        //Serial.print(char_digit);
-        countdown_message[countdown_message_idx] = char_digit;
-        countdown_message_idx++;
-      }
-      digit = floor(countdown[i]% 10);
-      if (digit > 0 || started_chars) {
-        // pick up the hundreds digit
-        started_chars = true;
-        unit_length_temp++;
-        char char_digit = '0' + digit;
-        //Serial.print(char_digit);
-        countdown_message[countdown_message_idx] = char_digit;
-        countdown_message_idx++;
-      }
-      */
-
       //Serial.print("Value of unit: ");
       //  Serial.print(countdown[i]);
       unit_msg = String(countdown[i]);
@@ -255,71 +194,41 @@ void Display_Countdown() {
 
       switch (i) {
         case 0:
-          //countdown_message_idx++;
-          //countdown_message[countdown_message_idx] = 'Y';
           unit_msg += 'Y';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 1:
-          //countdown_message_idx++;
-          //countdown_message[countdown_message_idx] = 'M';
           unit_msg += 'M';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 2:
-          //countdown_message_idx++;
-          //countdown_message[countdown_message_idx] = 'W';
           unit_msg += 'W';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 3:
-          //countdown_message_idx++;
-          //countdown_message[countdown_message_idx] = 'D';
           unit_msg += 'D';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 4:
-          //countdown_message_idx++;
-          //countdown_message[countdown_message_idx] = 'H';
           unit_msg += 'H';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 5:
-          //countdown_message_idx++;
-          //countdown_message[countdown_message_idx] = 'M';
           unit_msg += 'M';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
       }
-      Serial.print("Current Unit: ");
-        Serial.print(unit_msg);
+      //Serial.print("Current Unit: ");
+      //  Serial.print(unit_msg);
 
       if(countdown_string.length() + unit_msg.length() <= address_count) {
         countdown_string += unit_msg;
-        Serial.println("  Adding unit to countdown");
+      //  Serial.println("  Adding unit to countdown");
       } else {
-        Serial.println("  Countdown message too long, not added");
+      //  Serial.println("  Countdown message too long, not added");
       }
     }
-    //unit_length[i] = unit_length_temp;
   }
-
-  /*for (int i = 0; i < 6; i++) {
-    Serial.print("Unit [");
-      Serial.print(i);
-      Serial.print("] length: ");
-      Serial.println(unit_length[i]);
-  }*/
-
-  //Serial.print("Countdown message: ");
-  //  Serial.println(countdown_string);
-
-  /*int countdown_message_characters = 0;
-  for (int i = 0; i<6; i++) {
-    if (unit_length[i] + countdown_message_characters <= address_count) {
-      countdown_message_characters+= unit_length[i];
-    }
-  }*/
 
   int countdown_length = countdown_string.length();
   for (int i = 0; i<address_count; i++) {
@@ -334,13 +243,10 @@ void Display_Countdown() {
 
 void Display_Time() {
   // needs to change format based on number of characters
-  if (address_count >= 5) {
-    // center time in digits, preferring fewer spaces left
-  } else if (address_count == 4) {
-    // remove colon
-  } else {
-    // remove time frame validity
+  if (address_count >= 4) {
+    // add hour to mes
   }
+  if 
 }
 
 void Display_Date() {
