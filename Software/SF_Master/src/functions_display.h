@@ -15,6 +15,7 @@
 
 // Settings from main
   extern char display_chars[33]; // global display
+  extern String display_string;
   extern bool use_12_hr_time;
   extern unsigned long display_framerate;
   //extern unsigned long display_frame_last;
@@ -25,6 +26,8 @@
   extern bool   countdown_days_show;
   extern bool   countdown_hours_show;
   extern bool   countdown_minutes_show;
+  extern const char char_order[41];
+  extern String character_order;
 
 // Values taken from "functions_time"
   // Time

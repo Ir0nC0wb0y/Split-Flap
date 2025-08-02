@@ -49,6 +49,13 @@ void send_character(int digit, char payload) {
   // check status
   bool digit_status = false;
   display_chars[digit] = payload;
+  //Serial.print("current char at position ");
+  //  Serial.print(digit);
+  //  Serial.print(": ");
+  //  Serial.print(display_string.charAt(digit));
+  display_string.setCharAt(digit, payload);
+  //  Serial.print(" after change: ");
+  //  Serial.println(display_string.charAt(digit));
   while (!digit_status) {
     digit_status = I2C_Message_34(digit);
     delay(100);

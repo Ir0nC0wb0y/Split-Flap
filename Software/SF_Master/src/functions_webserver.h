@@ -8,7 +8,9 @@
 #include <WebServer.h>
 
 extern WebServer server;
-extern String current_letters;
+//extern String current_letters;
+extern String display_string_server;
+//extern String display_string; // probably need to set this at the appropriate time
 
 void setup_webserver();
 

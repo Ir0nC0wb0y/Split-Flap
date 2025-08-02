@@ -23,12 +23,11 @@
     bool use_12_hr_time = true;
     bool countdown_years_show   = true;
     bool countdown_months_show  = true;
-    bool countdown_weeks_show   = true;
+    bool countdown_weeks_show   = false;
     bool countdown_days_show    = true;
     bool countdown_hours_show   = true;
     bool countdown_minutes_show = true;
     time_t countdown_event = 1755468000; // value used for testing, should equate to 8/17/25 @ 17:00:00 CDT
-
 
 // I2C
   #include "functions_i2c.h"
@@ -48,15 +47,20 @@
   
 
 // Display Functions
+  static String character_order = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
   #include "functions_display.h"
   char display_chars[33]; // global display
+  String display_string;
+  const char char_order[41] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
+  
 
 
 // Webserver
   #include "functions_webserver.h"
   WebServer server(80);
   //AsyncWebServer server(80);
-  String current_letters = "      "; // This should probably be more dynamic, or just use the "display_chars" variable
+  //String current_letters = "      ";
+  String display_string_server;
   
 
 void setup() {
@@ -77,6 +81,19 @@ void setup() {
 
   // Connect digits
   I2C_Address_Scan();
+  display_string.reserve(address_count);
+  display_string_server.reserve(address_count);
+  for (int i = 0; i< address_count; i++) {
+    if (i == 0) {
+      display_string = ' ';
+      display_string_server = ' ';
+    } else {
+      display_string += ' ';
+      display_string_server += ' ';
+    }
+    
+  }
+  
 
   memset(display_chars, '\0', sizeof(display_chars));
 

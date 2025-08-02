@@ -11,7 +11,6 @@
   // Demo                 (frame ID: 99)
 
 // local variables
-  const char char_order[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
   int frame_ID_last = -1;
   int frame_IDs[5]   = {1, 2, 3, 4, 99}; // update to keep consistent
   int frame_valid[5] = {1, 0, 0, 0,  0}; // boolean turn on
@@ -24,6 +23,10 @@ void HandleDisplay() {
   if (display_frame_last + display_framerate <= millis()) {
     Serial.print("Framerate: ");
       Serial.println(display_framerate);
+    
+    // Clear frame
+    ClearDisplay();
+
     int frame_next = -1;
     // check for next "turned on" frame type
     int Frame_ArrayLength = sizeof(frame_valid) / sizeof(frame_valid[0]);
@@ -77,6 +80,7 @@ void HandleDisplay() {
     Display_PrettySerial();
   #endif
   
+  Serial.println();
   display_frame_last = millis();
   }
 }
@@ -86,20 +90,34 @@ void Display_PrettySerial() {
   // 30 31 32 33
   //  A  B  C  D
 
+  // addresses
   for (int i=0; i<address_count; i++) {
     Serial.print(address_list[i]);
       Serial.print(" ");
   }
   Serial.println();
 
-  for (int i=0; i<address_count; i++) {
+  // Character array
+  /*for (int i=0; i<address_count; i++) {
     Serial.print(" ");
       Serial.print(display_chars[i]);
       if (i < address_count-1) {
         Serial.print(" ");
       }
   }
+  Serial.println();*/
+
+  // String
+  for (int i=0; i< address_count; i++) {
+    Serial.print(" ");
+      Serial.print(display_string.charAt(i));
+    if (i < address_count-1) {
+      Serial.print(" ");
+    }
+  }
   Serial.println();
+  //Serial.print("Sanity check: ");
+  //  Serial.print(display_string);
 }
 
 void Display_Countdown() {
@@ -174,14 +192,18 @@ void Display_Countdown() {
 
 
   // build message, cut to size
-  char countdown_message[33];
-  int countdown_message_idx = 0;
-  int unit_length[6] = {0, 0, 0, 0, 0, 0};
-  memset(display_chars, '\0', sizeof(display_chars));
+  //char countdown_message[33];
+  String countdown_string;
+  //bool length_reached = false;
+  //int countdown_message_idx = 0;
+  //int unit_length[6] = {0, 0, 0, 0, 0, 0};
+  //memset(display_chars, '\0', sizeof(display_chars));
   for (int i = 0; i<6; i++) {
-    bool started_chars = false;
-    int unit_length_temp = 0;
+    String unit_msg;
+    //bool started_chars = false;
+    //int unit_length_temp = 0;
     if (disp_unit[i]) {
+      /*
       unit_length_temp = 1;
       int digit = floor((countdown[i]% 10000)/1000);
       if (digit > 0) {
@@ -223,63 +245,86 @@ void Display_Countdown() {
         countdown_message[countdown_message_idx] = char_digit;
         countdown_message_idx++;
       }
-      
+      */
+
+      //Serial.print("Value of unit: ");
+      //  Serial.print(countdown[i]);
+      unit_msg = String(countdown[i]);
+      //  Serial.print(" now as string: ");
+      //  Serial.println(unit_msg);
+
       switch (i) {
         case 0:
-          countdown_message_idx++;
-          countdown_message[countdown_message_idx] = 'Y';
+          //countdown_message_idx++;
+          //countdown_message[countdown_message_idx] = 'Y';
+          unit_msg += 'Y';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 1:
-          countdown_message_idx++;
-          countdown_message[countdown_message_idx] = 'M';
+          //countdown_message_idx++;
+          //countdown_message[countdown_message_idx] = 'M';
+          unit_msg += 'M';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 2:
-          countdown_message_idx++;
-          countdown_message[countdown_message_idx] = 'W';
+          //countdown_message_idx++;
+          //countdown_message[countdown_message_idx] = 'W';
+          unit_msg += 'W';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 3:
-          countdown_message_idx++;
-          countdown_message[countdown_message_idx] = 'D';
+          //countdown_message_idx++;
+          //countdown_message[countdown_message_idx] = 'D';
+          unit_msg += 'D';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 4:
-          countdown_message_idx++;
-          countdown_message[countdown_message_idx] = 'H';
+          //countdown_message_idx++;
+          //countdown_message[countdown_message_idx] = 'H';
+          unit_msg += 'H';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
         case 5:
-          countdown_message_idx++;
-          countdown_message[countdown_message_idx] = 'M';
+          //countdown_message_idx++;
+          //countdown_message[countdown_message_idx] = 'M';
+          unit_msg += 'M';
           //Serial.println(countdown_message[countdown_message_idx]);
           break;
       }
+      Serial.print("Current Unit: ");
+        Serial.print(unit_msg);
+
+      if(countdown_string.length() + unit_msg.length() <= address_count) {
+        countdown_string += unit_msg;
+        Serial.println("  Adding unit to countdown");
+      } else {
+        Serial.println("  Countdown message too long, not added");
+      }
     }
-    unit_length[i] = unit_length_temp;
+    //unit_length[i] = unit_length_temp;
   }
 
-  for (int i = 0; i < 6; i++) {
+  /*for (int i = 0; i < 6; i++) {
     Serial.print("Unit [");
       Serial.print(i);
       Serial.print("] length: ");
       Serial.println(unit_length[i]);
-  }
+  }*/
 
-  Serial.print("Countdown message: ");
-    Serial.println(countdown_message);
+  //Serial.print("Countdown message: ");
+  //  Serial.println(countdown_string);
 
-  int countdown_message_characters = 0;
+  /*int countdown_message_characters = 0;
   for (int i = 0; i<6; i++) {
     if (unit_length[i] + countdown_message_characters <= address_count) {
       countdown_message_characters+= unit_length[i];
     }
-  }
+  }*/
 
+  int countdown_length = countdown_string.length();
   for (int i = 0; i<address_count; i++) {
-    if (i < countdown_message_characters) {
-      send_character(i,countdown_message[i]);
+    if (i < countdown_length) {
+      send_character(i,countdown_string.charAt(i));
     } else {
       send_character(i,' ');
     }
@@ -365,11 +410,18 @@ char Demo_NewChar(int demo_state) {
 }
 
 void ClearDisplay() {
-  for (int i; i<33; i++) {
+  Serial.println("Clearing display string");
+  // char array
+  /*for (int i; i<33; i++) {
     if (i < address_count) {
       display_chars[i] = ' ';
     } else {
       display_chars[i] = '\0';
     }
+  }*/
+
+  // String
+  for (int i = 0; i < address_count; i++) {
+    display_string.setCharAt(i, ' ');
   }
 }

@@ -17,6 +17,8 @@
 extern byte address_list[32];
 extern int address_count;
 extern char display_chars[33];
+extern String display_string;
+//extern const char char_order[41];
 
 void I2C_Address_Scan();
 void I2C_Message_33(int digit, I2CTx_33 payload);

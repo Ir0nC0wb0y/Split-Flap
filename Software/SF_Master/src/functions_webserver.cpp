@@ -12,7 +12,7 @@ void setup_webserver() {
 }
 
 void handleGetMessage() {
-      server.send(200, "application/json", '"' + current_letters + '"');
+      server.send(200, "application/json", '"' + display_string_server + '"');
   }
 
 void handlePostMessage() {
@@ -37,7 +37,7 @@ void handlePostMessage() {
         }
     }
     if (body.length() > num_chars) body = body.substring(0, num_chars);
-    current_letters = body;
+    display_string_server = body;
     // TODO: Send to hardware
     server.send(200, "text/plain", "OK");
 }
