@@ -13,10 +13,60 @@
 // local variables
   int frame_ID_last = -1;
   int frame_IDs[5]   = {1, 2, 3, 4, 99}; // update to keep consistent
-  int frame_valid[5] = {1, 0, 0, 0,  0}; // boolean turn on
+  int frame_valid[5] = {1, 0, 1, 1,  0}; // boolean turn on
   int demo_state = 40;
   unsigned long display_frame_last = 0;
   int time_hour = 0;
+
+void string_align(String& str, char pad_char, int alignment, int length) {
+  int pad_length = length - str.length();
+  int pad_right = 0;
+  int pad_left = 0;
+  
+  switch (alignment) {
+    case ALIGN_LEFT:
+      // Align left
+      // padding goes to right of string
+      pad_right = pad_length;
+      break;
+    
+    case ALIGN_CENTER:
+      // Align center
+        // padding goes half right/half left, with remainder on left
+      pad_right = floor(pad_length/2);
+      pad_left = pad_right + pad_length % 2;
+      break;
+    
+    case ALIGN_RIGHT:
+      // Align right
+        // padding goes to left of string
+      pad_left = pad_length;
+      break;
+  }
+
+  // Do padding operations
+  if (pad_right > 0) {
+    for (int i = 0; i < pad_right; i++) {
+      str = str + String(pad_char);
+    }
+  }
+  if (pad_left > 0) {
+    for (int i = 0; i < pad_left; i++) {
+      str = String(pad_char) + str;
+    }
+  }
+}
+
+void send_String(String& str) {
+  int countdown_length = str.length();
+  for (int i = 0; i<address_count; i++) {
+    if (i < countdown_length) {
+      send_character(i,str.charAt(i));
+    } else {
+      send_character(i,' ');
+    }
+  }
+}
 
 void HandleDisplay() {
   // check timing
@@ -25,11 +75,12 @@ void HandleDisplay() {
     //  Serial.println(display_framerate);
     
     // Clear frame
-    ClearDisplay();
+    //ClearDisplay(); // not necessary with string_align
 
     int frame_next = -1;
     // check for next "turned on" frame type
     int Frame_ArrayLength = sizeof(frame_valid) / sizeof(frame_valid[0]);
+    Serial.println("Searching for frame");
     for (int i=0; i < Frame_ArrayLength; i++) {
       if (frame_valid[i]) {
         if (frame_IDs[i] > frame_ID_last) {
@@ -39,7 +90,7 @@ void HandleDisplay() {
       }
     }
     if (frame_next == -1) {
-      Serial.println("Next frame not found, wrapping around");
+      //Serial.println("Next frame not found, wrapping around");
       for (int i=0; i < Frame_ArrayLength; i++) {
         if (frame_valid[i]) {
           frame_next = frame_IDs[i];
@@ -82,6 +133,7 @@ void HandleDisplay() {
   
   Serial.println();
   display_frame_last = millis();
+  frame_ID_last = frame_next;
   }
 }
 
@@ -113,8 +165,8 @@ void Display_PrettySerial() {
 void Display_Countdown() {
   time_t time_now = ntp.epoch();
   double countdown_seconds = difftime(countdown_event, time_now);
-  Serial.print("Countdown seconds: ");
-    Serial.println(countdown_seconds);
+  //Serial.print("Countdown seconds: ");
+  //  Serial.println(countdown_seconds);
   long countdown[6] = {0, 0, 0, 0, 0, 0};
   bool disp_unit[6] = {0, 0, 0, 0, 0, 0};
 
@@ -126,8 +178,9 @@ void Display_Countdown() {
       disp_unit[0] = true;
       Serial.print("Years: ");
         Serial.print(countdown[0]);
-        Serial.print(" remaining seconds: ");
-        Serial.println(countdown_seconds);
+        //Serial.print(" remaining seconds: ");
+        //Serial.print(countdown_seconds);
+        Serial.println();
     }
     // Months
     if (countdown_months_show && countdown_seconds >= COUNTDOWN_SEC_MON) {
@@ -146,8 +199,9 @@ void Display_Countdown() {
       disp_unit[2] = true;
       Serial.print("Weeks: ");
         Serial.print(countdown[2]);
-        Serial.print(" remaining seconds: ");
-        Serial.println(countdown_seconds);
+        //Serial.print(" remaining seconds: ");
+        //Serial.print(countdown_seconds);
+        Serial.println();
     }
     // Days
     if (countdown_days_show && countdown_seconds >= COUNTDOWN_SEC_DAY) {
@@ -156,8 +210,9 @@ void Display_Countdown() {
       disp_unit[3] = true;
       Serial.print("Days: ");
         Serial.print(countdown[3]);
-        Serial.print(" remaining seconds: ");
-        Serial.println(countdown_seconds);
+        //Serial.print(" remaining seconds: ");
+        //Serial.print(countdown_seconds);
+        Serial.println();
     }
     // Hours
     if (countdown_hours_show && countdown_seconds >= COUNTDOWN_SEC_HOUR) {
@@ -166,8 +221,9 @@ void Display_Countdown() {
       disp_unit[4] = true;
       Serial.print("Hours: ");
         Serial.print(countdown[4]);
-        Serial.print(" remaining seconds: ");
-        Serial.println(countdown_seconds);
+        //Serial.print(" remaining seconds: ");
+        //Serial.print(countdown_seconds);
+        Serial.println();
     }
     // Minutes
     if (countdown_minutes_show && countdown_seconds >= COUNTDOWN_SEC_MIN) {
@@ -176,8 +232,9 @@ void Display_Countdown() {
       disp_unit[5] = true;
       Serial.print("Minutes: ");
         Serial.print(countdown[5]);
-        Serial.print(" remaining seconds: ");
-        Serial.println(countdown_seconds);
+        //Serial.print(" remaining seconds: ");
+        //Serial.print(countdown_seconds);
+        Serial.println();
     }
 
 
@@ -230,40 +287,133 @@ void Display_Countdown() {
     }
   }
 
-  int countdown_length = countdown_string.length();
-  for (int i = 0; i<address_count; i++) {
-    if (i < countdown_length) {
-      send_character(i,countdown_string.charAt(i));
-    } else {
-      send_character(i,' ');
-    }
-  }
+  string_align(countdown_string, ' ', display_alignment, address_count);
 
+  send_String(countdown_string);
 }
 
 void Display_Time() {
   // needs to change format based on number of characters
-  if (address_count >= 4) {
-    // add hour to mes
+  if (address_count < 4) {
+    frame_valid[2] = 0;
   }
-  if 
+  String time_message;
+  if (address_count >= 4) {
+    // add hour to message
+    // format time_hour
+    if (use_12_hr_time) {
+      if (time_hour_raw > 12) {
+        time_hour = time_hour_raw - 12;
+      } else if (time_hour_raw == 0) {
+        time_hour = 12;
+      } else {
+        time_hour = time_hour_raw;
+      }
+    } else {
+      time_hour = time_hour_raw;
+    }
+    
+    if (time_hour < 10) {
+      if (use_12_hr_time) {
+        time_message = String(" ") + String(time_hour);
+      } else {
+        time_message = String("0") + String(time_hour);
+      }
+    } else {
+      time_message = String(time_hour);
+    }
+  }
+  if (address_count >= 5 && use_12_hr_time) {
+    // add colon
+    time_message += String(':');
+  }
+  if (address_count >= 4) {
+    // add minute
+    if (time_minute < 10) {
+      time_message += String("0") + String(time_minute);
+    } else {
+      time_message += String(time_minute);
+    }
+  }
+
+  // Add time formatting
+  if (use_12_hr_time) {
+    if (address_count == 6) {
+      // add letter A/P (as in Am/Pm)
+      if(time_hour_raw > 11) {
+        time_message += String('P');
+      } else {
+        time_message += String('A');
+      }
+    }
+    if (address_count == 7) {
+      // add AM/PM
+      if(time_hour_raw > 11) {
+        time_message += String("PM");
+      } else {
+        time_message += String("AM");
+      }
+    }
+    if (address_count >= 8) {
+      // add " AM"/" PM"
+      if(time_hour_raw > 11) {
+        time_message += String(" PM");
+      } else {
+        time_message += String(" AM");
+      }
+    }
+  } else {
+    if (address_count == 5) {
+      time_message += String("H");
+    }
+    if (address_count > 5 && address_count < 10) {
+      time_message += String(" H");
+    }
+    if (address_count >= 10) {
+      time_message += String(" HOURS");
+    }
+  }
+
+  string_align(time_message, ' ', display_alignment, address_count);
+
+  send_String(time_message);
+
 }
 
 void Display_Date() {
   // needs to change format based on number of characters
+  if (address_count < 5) {
+    frame_valid[3] = 0;
+    return;
+  }
+  String Date_message;
   if (address_count >= 10) {
     // Date format: MM/DD/YYYY
-    // center date in digits, preferring fewer spaces to the left
+    Date_message = String(date_month);
+    Date_message += String("/");
+    Date_message += String(date_day);
+    Date_message += String("/");
+    Date_message += String(date_year);
   } else if (address_count >= 8) {
     // Date Format: MM/DD/YY
-    // center date in digits, preferring fewer spaces to the left
+    Date_message = String(date_month);
+    Date_message += String("/");
+    Date_message += String(date_day);
+    Date_message += String("/");
+    int date_year_show = date_year % 100;
+    Date_message += String(date_year_show);
   } else if (address_count >= 5) {
     // Date Format: MM/DD
-    // center date in digits, preferring fewer spaces to the left
-  } else {
-    // remove date frame validity
+    Date_message = String(date_month);
+    Date_message += String("/");
+    Date_message += String(date_day);
   }
+
+  string_align(Date_message, ' ', display_alignment, address_count);
+
+  send_String(Date_message);
 }
+
 
 void Demo_Run(bool all_digits) {
   // the all_digits flag toggles whether all digits are the same random character,
@@ -302,15 +452,7 @@ char Demo_NewChar(int demo_state) {
     new_char_idx = random(0,FLAPS_NUM);
   }
 
-  char new_char = char_order[new_char_idx];
-  /*
-  if (demo_state < FLAPS_NUM) {
-    Serial.print("Cycle to character: ");
-  } else {
-    Serial.print("Random character: ");
-  }
-  Serial.println(new_char);
-  */
+  char new_char = character_order.charAt(new_char_idx);
 
   return new_char;
 }

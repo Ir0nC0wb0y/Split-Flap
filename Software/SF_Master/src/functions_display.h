@@ -13,6 +13,12 @@
 #define COUNTDOWN_SEC_HOUR      3600
 #define COUNTDOWN_SEC_MIN         60
 
+enum Alignment {
+  ALIGN_LEFT = 1,
+  ALIGN_CENTER,
+  ALIGN_RIGHT
+};
+
 // Settings from main
   extern String display_string;
   extern bool use_12_hr_time;
@@ -25,7 +31,8 @@
   extern bool   countdown_days_show;
   extern bool   countdown_hours_show;
   extern bool   countdown_minutes_show;
-  extern const char char_order[41];
+  extern int display_alignment;
+  //extern const char char_order[41];
   extern String character_order;
 
 // Values taken from "functions_time"
@@ -38,6 +45,8 @@
     extern int date_day;
 
 void send_character(int digit, char payload);
+void send_String(String& str);
+void string_align(String& str, char pad_char, int alignment, int length);
 void HandleDisplay();
 // Pretty Serial
   void Display_PrettySerial();
