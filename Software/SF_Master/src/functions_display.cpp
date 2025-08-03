@@ -169,6 +169,7 @@ void Display_Countdown() {
   //  Serial.println(countdown_seconds);
   long countdown[6] = {0, 0, 0, 0, 0, 0};
   bool disp_unit[6] = {0, 0, 0, 0, 0, 0};
+  bool message_built = false;
 
   // Convert the time
     // Years
@@ -280,13 +281,20 @@ void Display_Countdown() {
 
       if(countdown_string.length() + unit_msg.length() <= address_count) {
         countdown_string += unit_msg;
+        message_built = true;
       //  Serial.println("  Adding unit to countdown");
       } else {
       //  Serial.println("  Countdown message too long, not added");
       }
     }
   }
-
+  if (!message_built) {
+    frame_valid[0] = 0;
+    Serial.println("Countdown Display no longer valid");
+    display_frame_last = 0;
+    return;
+  }
+  
   string_align(countdown_string, ' ', display_alignment, address_count);
 
   send_String(countdown_string);
@@ -296,6 +304,9 @@ void Display_Time() {
   // needs to change format based on number of characters
   if (address_count < 4) {
     frame_valid[2] = 0;
+    Serial.println("Time Display no longer valid");
+    display_frame_last = 0;
+    return;
   }
   String time_message;
   if (address_count >= 4) {
@@ -384,6 +395,8 @@ void Display_Date() {
   // needs to change format based on number of characters
   if (address_count < 5) {
     frame_valid[3] = 0;
+    Serial.println("Date Display no longer valid");
+    display_frame_last = 0;
     return;
   }
   String Date_message;

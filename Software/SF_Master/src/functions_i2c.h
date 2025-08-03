@@ -6,7 +6,7 @@
 
 #include "I2C_messages.h"
 
-#define DEBUG_DIGITS 8
+#define DEBUG_DIGITS 10
 
 #define PIN_SCL 22
 #define PIN_SDA 21

@@ -29,15 +29,16 @@ String character_order = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
     bool dst_state               = 1; // flag for current DST state
   // Display Options
     unsigned long display_framerate = 5000; // there will be a minimum value
-    bool use_12_hr_time = false;
+    bool use_12_hr_time = true;
     bool countdown_years_show   = true;
     bool countdown_months_show  = true;
     bool countdown_weeks_show   = false;
     bool countdown_days_show    = true;
     bool countdown_hours_show   = true;
     bool countdown_minutes_show = true;
-    int  display_alignment = ALIGN_CENTER;
-    time_t countdown_event = 1755468000; // value used for testing, should equate to 8/17/25 @ 17:00:00 CDT
+    int  display_alignment = ALIGN_CENTER; // should be selectable from the list of the "alignment" enum
+    //time_t countdown_event = 1755468000; // value used for testing, should equate to 8/17/25 @ 17:00:00 CDT
+    time_t countdown_event = 1805341501; // value used for testing, should be 3/17/25 @ 10:45:01 CDT
 
 // I2C
   byte address_list[32];
@@ -47,7 +48,8 @@ String character_order = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
   // Nothing here (yet)
 
 // Digits
-  #define DEBUG_DIGITS 8 // Comment this macro to search for connected digits
+  //#define DEBUG_DIGITS 8 // Comment this macro to search for connected digits
+    // DEBUG_DIGITS is now in "functions_i2c.h"
 
 // NTP & Date/Time
   WiFiUDP ntpUDP;
@@ -71,12 +73,14 @@ void setup() {
   
   Wire.begin(PIN_SDA, PIN_SCL);
 
+  Serial.print("Starting File System ");
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS Mount Failed");
     while(true) {
       yield();
     }
   }
+  Serial.println("... Success!");
 
   connect2WiFi(); // must be done after LittleFS is successful
 
