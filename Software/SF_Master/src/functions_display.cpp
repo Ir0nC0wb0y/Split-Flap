@@ -58,6 +58,8 @@ void string_align(String& str, char pad_char, int alignment, int length) {
 }
 
 void send_String(String& str) {
+  Serial.print("Sending message to digits ");
+  unsigned long send_time = millis();
   int countdown_length = str.length();
   for (int i = 0; i<address_count; i++) {
     if (i < countdown_length) {
@@ -65,7 +67,11 @@ void send_String(String& str) {
     } else {
       send_character(i,' ');
     }
+    Serial.print(".");
   }
+  Serial.print(" Complete in ");
+    Serial.print(millis() - send_time);
+    Serial.print("ms");
 }
 
 void HandleDisplay() {

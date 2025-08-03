@@ -44,7 +44,7 @@ enum Alignment {
     extern int date_month;
     extern int date_day;
 
-void send_character(int digit, char payload);
+
 void send_String(String& str);
 void string_align(String& str, char pad_char, int alignment, int length);
 void HandleDisplay();

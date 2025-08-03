@@ -13,6 +13,7 @@
 #define I2C_BUS_DELAY 1000 // Wait a moment before scanning to give slower digits a chance to join the bus
 #define I2C_DIGIT_ADDR_START 30
 #define I2C_DIGIT_ADDR_END   62
+#define DIGIT_READY_WAIT 100
 
 extern byte address_list[32];
 extern int address_count;
@@ -20,6 +21,7 @@ extern String display_string;
 //extern const char char_order[41];
 
 void I2C_Address_Scan();
+void send_character(int digit, char payload);
 void I2C_Message_33(int digit, I2CTx_33 payload);
 bool I2C_Message_34(int digit);
 

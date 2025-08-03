@@ -49,9 +49,12 @@ void send_character(int digit, char payload) {
   // check status
   bool digit_status = false;
   display_string.setCharAt(digit, payload);
+  unsigned long digit_wait = 0;
   while (!digit_status) {
-    digit_status = I2C_Message_34(digit);
-    delay(100);
+    yield();
+    if (digit_wait + DIGIT_READY_WAIT <= millis()) {
+      digit_status = I2C_Message_34(digit);
+    }
   }
   // send character
     I2CTx_33 message;
@@ -91,6 +94,12 @@ bool I2C_Message_34(int digit) {
   // sends message 34 and requests message 128
   byte send_addr = address_list[digit];
   #ifdef DEBUG_DIGITS
+    long I2C_injection_delay = 2000; // Inject 2ms I2C delay
+    long digit_not_ready_chance = random(0,2001);
+    if (digit_not_ready_chance > 1800) { // roughly 10% chance of adding delay
+      I2C_injection_delay += 100000; // Inject digit not ready delay
+    }
+    delayMicroseconds(I2C_injection_delay); 
     bool digit_status = true;
   #endif
   #ifndef DEBUG_DIGITS
