@@ -71,7 +71,7 @@ void send_String(String& str) {
   }
   Serial.print(" Complete in ");
     Serial.print(millis() - send_time);
-    Serial.print("ms");
+    Serial.println("ms");
 }
 
 void HandleDisplay() {
