@@ -94,7 +94,7 @@ bool I2C_Message_34(int digit) {
   // sends message 34 and requests message 128
   byte send_addr = address_list[digit];
   #ifdef DEBUG_DIGITS
-    long I2C_injection_delay = 2000; // Inject 2ms I2C delay
+    long I2C_injection_delay = 500; // Inject 2ms I2C delay
     long digit_not_ready_chance = random(0,2001);
     if (digit_not_ready_chance > 1998) { // roughly 0.1% chance of adding delay
       I2C_injection_delay += 100000; // Inject digit not ready delay

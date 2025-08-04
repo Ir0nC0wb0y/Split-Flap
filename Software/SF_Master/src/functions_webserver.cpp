@@ -12,6 +12,9 @@ void setup_webserver() {
 }
 
 void handleGetMessage() {
+    if (display_string != display_string_server) {
+        display_string_server = display_string;
+    }
       server.send(200, "application/json", '"' + display_string_server + '"');
   }
 
@@ -30,7 +33,7 @@ void handlePostMessage() {
         }
     }
     // Pad or truncate to FLAPS_NUM (or 6 for demo)
-    int num_chars = 6; // Change to FLAPS_NUM if needed
+    int num_chars = address_count; // Change to FLAPS_NUM if needed
     if (body.length() < num_chars) {
         for (int i = body.length(); i < num_chars; ++i) {
             body += ' ';

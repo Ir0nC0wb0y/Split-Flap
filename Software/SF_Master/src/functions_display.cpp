@@ -87,6 +87,7 @@ bool HandleDisplay() {
     // Clear frame
     //ClearDisplay(); // not necessary with string_align
     if (frame_complete) {
+      int frame_temp = -1;
       frame_complete = false;
       // check for next "turned on" frame type
       int Frame_ArrayLength = sizeof(frame_valid) / sizeof(frame_valid[0]);
@@ -94,20 +95,21 @@ bool HandleDisplay() {
       for (int i=0; i < Frame_ArrayLength; i++) {
         if (frame_valid[i]) {
           if (frame_IDs[i] > frame_ID_last) {
-            frame_next = frame_IDs[i];
+            frame_temp = frame_IDs[i];
             break;
           }
         }
       }
-      if (frame_next == -1) {
+      if (frame_temp == -1) {
         //Serial.println("Next frame not found, wrapping around");
         for (int i=0; i < Frame_ArrayLength; i++) {
           if (frame_valid[i]) {
-            frame_next = frame_IDs[i];
+            frame_temp = frame_IDs[i];
             break;
           }
         }
       }
+      frame_next = frame_temp;
       Serial.print("Found next frame: ");
         Serial.println(frame_next);
     }
