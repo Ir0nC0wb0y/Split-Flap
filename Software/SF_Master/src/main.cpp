@@ -38,8 +38,8 @@ String character_order = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
     bool countdown_minutes_show = true;
     int  display_alignment = ALIGN_CENTER; // should be selectable from the list of the "alignment" enum
     //time_t countdown_event = 1755468000; // value used for testing, should equate to 8/17/25 @ 17:00:00 CDT
-    time_t countdown_event = 1805341501; // value used for testing, should be 3/17/27 @ 10:45:01 CDT
-    //time_t countdown_event = 1710733501; // value used for testing, should be 3/17/24 @ 10:45:01 CDT
+    time_t countdown_event = 1805341501; // value used for testing, should be 3/17/27 @ 10:45:01 PM CDT
+    //time_t countdown_event = 1710733501; // value used for testing, should be 3/17/24 @ 10:45:01 PM CDT
 
 // I2C
   byte address_list[32];

@@ -64,6 +64,11 @@ void send_String(String& str) {
   unsigned long send_time = millis();
   int countdown_length = str.length();
   for (int i = 0; i<address_count; i++) {
+    if (str.charAt(i) == display_string.charAt(i)) {
+      // Only send the value if is different
+      Serial.print(".");
+      continue;
+    }
     if (i < countdown_length) {
       send_character(i,str.charAt(i));
     } else {
@@ -211,8 +216,9 @@ void Display_Countdown() {
       disp_unit[1] = true;
       Serial.print("Months: ");
         Serial.print(countdown[1]);
-        Serial.print(" remaining seconds: ");
-        Serial.println(countdown_seconds);
+        //Serial.print(" remaining seconds: ");
+        //Serial.print(countdown_seconds);
+        Serial.println();
     }
     // Weeks
     if (countdown_weeks_show && countdown_seconds >= COUNTDOWN_SEC_WEEK) {
