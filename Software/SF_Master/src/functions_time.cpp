@@ -19,12 +19,13 @@ void setup_time() {
   Serial.println(" Success!");
 }
 
-void handle_time() {
-  ntp.update();
+bool handle_time() {
+  bool ran_ntp = ntp.update();
   // set date & time variables to updated time
   time_hour_raw = ntp.hours();
   time_minute = ntp.minutes();
   date_year = ntp.year();
   date_month = ntp.month();
   date_day = ntp.day();
+  return ran_ntp;
 }

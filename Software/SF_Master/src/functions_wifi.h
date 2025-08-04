@@ -15,6 +15,6 @@
 #define WIFI_CHECK_TIME 900000   // will check for WiFi connection every 15 minutes
 
 void connect2WiFi();
-void checkWiFi();
+bool checkWiFi();
 
 #endif

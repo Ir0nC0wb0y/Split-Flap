@@ -12,11 +12,13 @@
 
 // local variables
   int frame_ID_last = -1;
+  int frame_next = -1;
   int frame_IDs[5]   = {1, 2, 3, 4, 99}; // update to keep consistent
   int frame_valid[5] = {1, 0, 1, 1,  0}; // boolean turn on
   int demo_state = 40;
   unsigned long display_frame_last = 0;
   int time_hour = 0;
+  bool frame_complete = true;
 
 void string_align(String& str, char pad_char, int alignment, int length) {
   int pad_length = length - str.length();
@@ -74,39 +76,43 @@ void send_String(String& str) {
     Serial.println("ms");
 }
 
-void HandleDisplay() {
+bool HandleDisplay() {
   // check timing
+  bool ran_display = false;
   if (display_frame_last + display_framerate <= millis()) {
+    ran_display = true;
     //Serial.print("Framerate: ");
     //  Serial.println(display_framerate);
     
     // Clear frame
     //ClearDisplay(); // not necessary with string_align
-
-    int frame_next = -1;
-    // check for next "turned on" frame type
-    int Frame_ArrayLength = sizeof(frame_valid) / sizeof(frame_valid[0]);
-    Serial.println("Searching for frame");
-    for (int i=0; i < Frame_ArrayLength; i++) {
-      if (frame_valid[i]) {
-        if (frame_IDs[i] > frame_ID_last) {
-          frame_next = frame_IDs[i];
-          break;
-        }
-      }
-    }
-    if (frame_next == -1) {
-      //Serial.println("Next frame not found, wrapping around");
+    if (frame_complete) {
+      frame_complete = false;
+      // check for next "turned on" frame type
+      int Frame_ArrayLength = sizeof(frame_valid) / sizeof(frame_valid[0]);
+      Serial.println("Searching for frame");
       for (int i=0; i < Frame_ArrayLength; i++) {
         if (frame_valid[i]) {
-          frame_next = frame_IDs[i];
-          break;
+          if (frame_IDs[i] > frame_ID_last) {
+            frame_next = frame_IDs[i];
+            break;
+          }
         }
       }
+      if (frame_next == -1) {
+        //Serial.println("Next frame not found, wrapping around");
+        for (int i=0; i < Frame_ArrayLength; i++) {
+          if (frame_valid[i]) {
+            frame_next = frame_IDs[i];
+            break;
+          }
+        }
+      }
+      Serial.print("Found next frame: ");
+        Serial.println(frame_next);
     }
-    Serial.print("Found next frame: ");
-      Serial.println(frame_next);
     // run frame function
+    display_frame_last = millis();
     switch (frame_next) {
       case 1:
         Serial.println("Displaying countdown");
@@ -138,9 +144,9 @@ void HandleDisplay() {
   #endif
   
   Serial.println();
-  display_frame_last = millis();
   frame_ID_last = frame_next;
   }
+  return ran_display;
 }
 
 void Display_PrettySerial() {
@@ -171,8 +177,15 @@ void Display_PrettySerial() {
 void Display_Countdown() {
   time_t time_now = ntp.epoch();
   double countdown_seconds = difftime(countdown_event, time_now);
-  //Serial.print("Countdown seconds: ");
-  //  Serial.println(countdown_seconds);
+  Serial.print("Countdown seconds: ");
+    Serial.println(countdown_seconds);
+  if (countdown_seconds < 0) {
+    frame_valid[0] = 0;
+    Serial.println("Countdown Display no longer valid, fails sign check");
+    display_frame_last = 0;
+    frame_complete = true;
+    return;
+  }
   long countdown[6] = {0, 0, 0, 0, 0, 0};
   bool disp_unit[6] = {0, 0, 0, 0, 0, 0};
   bool message_built = false;
@@ -296,14 +309,27 @@ void Display_Countdown() {
   }
   if (!message_built) {
     frame_valid[0] = 0;
-    Serial.println("Countdown Display no longer valid");
+    Serial.println("Countdown Display no longer valid, fails message length");
     display_frame_last = 0;
+    frame_complete = true;
     return;
   }
   
   string_align(countdown_string, ' ', display_alignment, address_count);
 
   send_String(countdown_string);
+  frame_complete = true;
+}
+
+void Display_Message() {
+  // With between 5 and 10 digits, "Hello World" gets parsed as
+    // Frame1: "HELLO"
+    // Frame2: "WORLD"
+  // "Hello my little World." gets parsed differently, with 8 digits:
+    // Frame1: "HELLO MY"
+    // Frame2: "LITTLE"
+    // Frame3: "WORLD."
+  // longer words can be broken into pieces, using a "-" (not currently available)
 }
 
 void Display_Time() {
@@ -312,6 +338,7 @@ void Display_Time() {
     frame_valid[2] = 0;
     Serial.println("Time Display no longer valid");
     display_frame_last = 0;
+    frame_complete = true;
     return;
   }
   String time_message;
@@ -394,7 +421,7 @@ void Display_Time() {
   string_align(time_message, ' ', display_alignment, address_count);
 
   send_String(time_message);
-
+  frame_complete = true;
 }
 
 void Display_Date() {
@@ -403,6 +430,7 @@ void Display_Date() {
     frame_valid[3] = 0;
     Serial.println("Date Display no longer valid");
     display_frame_last = 0;
+    frame_complete = true;
     return;
   }
   String Date_message;
@@ -431,6 +459,7 @@ void Display_Date() {
   string_align(Date_message, ' ', display_alignment, address_count);
 
   send_String(Date_message);
+  frame_complete = true;
 }
 
 

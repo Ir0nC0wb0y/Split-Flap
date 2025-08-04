@@ -80,8 +80,10 @@ void connect2WiFi() {
   }
 }
 
-void checkWiFi() {
+bool checkWiFi() {
+  bool ran_wifi = false;
   if (last_wifi_check + WIFI_CHECK_TIME <= millis()) {
+    ran_wifi = true;
     Serial.print("Checking for WiFi: ");
     if (!WL_CONNECTED) {
       Serial.println("Oh no! WiFi is not connected!");
@@ -95,4 +97,5 @@ void checkWiFi() {
     }
     last_wifi_check = millis();
   }
+  return ran_wifi;
 }

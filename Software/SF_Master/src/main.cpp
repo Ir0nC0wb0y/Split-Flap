@@ -38,7 +38,8 @@ String character_order = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
     bool countdown_minutes_show = true;
     int  display_alignment = ALIGN_CENTER; // should be selectable from the list of the "alignment" enum
     //time_t countdown_event = 1755468000; // value used for testing, should equate to 8/17/25 @ 17:00:00 CDT
-    time_t countdown_event = 1805341501; // value used for testing, should be 3/17/25 @ 10:45:01 CDT
+    //time_t countdown_event = 1805341501; // value used for testing, should be 3/17/27 @ 10:45:01 CDT
+    time_t countdown_event = 1710733501; // value used for testing, should be 3/17/24 @ 10:45:01 CDT
 
 // I2C
   byte address_list[32];
@@ -106,11 +107,51 @@ void setup() {
 
 void loop() {
   // Scan for addresses
-  handle_time();
+  unsigned long loop_start = micros();
 
+  unsigned long time_start = micros();
+  bool ran_time = handle_time();
+  unsigned long time_stop  = micros();
+
+  unsigned long server_start = micros();
   server.handleClient();
+  unsigned long server_stop = micros();
 
-  checkWiFi();
+  unsigned long wifi_start = micros();
+  bool ran_wifi = checkWiFi();
+  unsigned long wifi_stop  = micros();
 
-  HandleDisplay();
+  unsigned long display_start = micros();
+  bool ran_display = HandleDisplay();
+  unsigned long display_stop = micros();
+
+  // Display length of loop if over 5ms
+  unsigned long loop_complete = micros();
+  if(loop_complete-loop_start > 5000) {
+    Serial.print("Loop time: ");
+      Serial.print(loop_complete-loop_start);
+      Serial.println("us and ran:");
+      if (ran_time) {
+        Serial.print("handle_time - ");
+        Serial.print(time_stop - time_start);
+        Serial.println("us");
+      }
+      if (server_stop - server_start > 2000) { //anything over 2ms counts as running
+        Serial.print("sever.handleClient - ");
+        Serial.print(server_stop - server_start);
+        Serial.println("us");
+      } 
+      if (ran_wifi) {
+        Serial.print("checkWiFi - ");
+        Serial.print(wifi_stop - wifi_start);
+        Serial.println("us");
+      }
+      if (ran_display) {
+        Serial.print("HandleDisplay - ");
+        Serial.print(display_stop - display_start);
+        Serial.println("us");
+      }
+      Serial.println();
+  }
+
 }

@@ -44,6 +44,6 @@
   
 // Collect functions
 void setup_time();
-void handle_time();
+bool handle_time();
 
 #endif

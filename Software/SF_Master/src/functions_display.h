@@ -47,12 +47,13 @@ enum Alignment {
 
 void send_String(String& str);
 void string_align(String& str, char pad_char, int alignment, int length);
-void HandleDisplay();
+bool HandleDisplay();
 // Pretty Serial
   void Display_PrettySerial();
 // Countdown            (frame ID:  1)
   void Display_Countdown();
 // Display Message(s)   (frame ID:  2)
+  void Display_Message();
 // Time                 (frame ID:  3)
   void Display_Time();
 // Date                 (frame ID:  4)
