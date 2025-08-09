@@ -1,4 +1,5 @@
 #include "functions_display.h"
+#include <vector>
 
 //################################################################################
 //###                         Display Functions                                ###
@@ -11,14 +12,21 @@
   // Demo                 (frame ID: 99)
 
 // local variables
+  // Frame Generation
   int frame_ID_last = -1;
+  unsigned long display_frame_last = 0;
   int frame_next = -1;
   int frame_IDs[5]   = {1, 2, 3, 4, 99}; // update to keep consistent
   int frame_valid[5] = {1, 0, 1, 1,  0}; // boolean turn on
-  int demo_state = 40;
-  unsigned long display_frame_last = 0;
-  int time_hour = 0;
   bool frame_complete = true;
+  // Time
+    int time_hour = 0;
+  // Message
+    std::vector<int> message_cut;
+    int message_cut_size = 0;
+  // Demo
+    int demo_state = 40;
+
 
 void string_align(String& str, char pad_char, int alignment, int length) {
   int pad_length = length - str.length();
@@ -93,7 +101,6 @@ bool HandleDisplay() {
     //ClearDisplay(); // not necessary with string_align
     if (frame_complete) {
       int frame_temp = -1;
-      frame_complete = false;
       // check for next "turned on" frame type
       int Frame_ArrayLength = sizeof(frame_valid) / sizeof(frame_valid[0]);
       Serial.println("Searching for frame");
@@ -123,20 +130,24 @@ bool HandleDisplay() {
     switch (frame_next) {
       case 1:
         Serial.println("Displaying countdown");
+        frame_complete = false;
         Display_Countdown();
         break;
 
       case 2:
         Serial.println("Displaying message");
+        Display_Message();
         break;
 
       case 3:
         Serial.println("Displaying Time");
+        frame_complete = false;
         Display_Time();
         break;
       
       case 4:
         Serial.println("Displaying Date");
+        frame_complete = false;
         Display_Date();
         break;
 
@@ -338,6 +349,21 @@ void Display_Message() {
     // Frame2: "LITTLE"
     // Frame3: "WORLD."
   // longer words can be broken into pieces, using a "-" (not currently available)
+
+  if (frame_complete) {
+    int message_length = display_message_string.length();
+    for (int i = 0; i < message_length; i++) {
+      if (display_message_string.charAt(i) == ' ') {
+        message_cut.push_back(i);
+      }
+    }
+  }
+  // Process:
+    // if frame complete:
+      // parse frame
+        // chunk into frames based on spaces
+  
+    // display frame
 }
 
 void Display_Time() {
