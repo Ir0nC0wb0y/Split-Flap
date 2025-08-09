@@ -29,8 +29,9 @@ String character_order = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
     bool dst_state               = 1; // flag for current DST state
   // Display Options
     unsigned long display_framerate = 5000; // there will be a minimum value
-    bool use_12_hr_time = true;
     int  display_alignment = ALIGN_CENTER; // should be selectable from the list of the "alignment" enum
+    // Time
+      bool use_12_hr_time = true;
     // Countdown
       bool countdown_years_show   = true;
       bool countdown_months_show  = true;
@@ -41,6 +42,8 @@ String character_order = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/";
       //time_t countdown_event = 1755468000; // value used for testing, should equate to 8/17/25 @ 17:00:00 CDT
       time_t countdown_event = 1805341501; // value used for testing, should be 3/17/27 @ 10:45:01 PM CDT
       //time_t countdown_event = 1710733501; // value used for testing, should be 3/17/24 @ 10:45:01 PM CDT
+    // Message
+      String display_message_string;
 
 // I2C
   byte address_list[32];
@@ -124,6 +127,9 @@ void loop() {
 
   unsigned long display_start = micros();
   bool ran_display = HandleDisplay();
+  if (ran_display) {
+    // push new string to server
+  }
   unsigned long display_stop = micros();
 
   // Display length of loop if over 5ms
